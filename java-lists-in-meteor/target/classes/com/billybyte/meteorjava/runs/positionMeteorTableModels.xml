@@ -1,4 +1,23 @@
 <list>
+
+  <com.billybyte.meteorjava.MeteorTableModel>
+    <_id>misc.HowTos</_id>
+    <displayTableName>How To Use SubscriptTables</displayTableName>
+    <collectionName>misc.HowTos</collectionName>
+    <tableColumnClassArr>
+      <com.billybyte.meteorjava.MeteorColumnModel>
+        <colName>topic</colName>
+        <nameInDoc>topic</nameInDoc>
+        <displayName>topic</displayName>
+      </com.billybyte.meteorjava.MeteorColumnModel>
+      <com.billybyte.meteorjava.MeteorColumnModel>
+        <colName>howTo</colName>
+        <nameInDoc>howTo</nameInDoc>
+        <displayName>howTo</displayName>
+      </com.billybyte.meteorjava.MeteorColumnModel>
+    </tableColumnClassArr>
+  </com.billybyte.meteorjava.MeteorTableModel>
+
   <com.billybyte.meteorjava.MeteorTableModel>
     <_id>misc.Trades</_id>
     <displayTableName>My Test Class</displayTableName>

@@ -30,6 +30,7 @@ import com.billybyte.meteorjava.staticmethods.Utils;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.internal.StringMap;
+import com.google.gson.stream.MalformedJsonException;
 
 /**
  * 
@@ -356,7 +357,9 @@ public class MeteorListSendReceive<M> {
 			List<StringMap<M>> stringMapList = (List<StringMap<M>>)gson.fromJson(listString, List.class);
 			ret = new ArrayList<M>();
 			for(StringMap<M> sm : stringMapList){
-				M m = getObject(sm.toString());
+				M m=null;
+//				Utils.prtObMess(this.getClass(), sm.toString());
+				m = getObject(sm.toString());
 				if(m!=null){
 					ret.add(m);
 				}
@@ -370,23 +373,60 @@ public class MeteorListSendReceive<M> {
 		try {
 			m = gson.fromJson(objectToString,classOFM);
 		} catch (JsonSyntaxException e) {
-			// try userId being null problem
-			if(objectToString.contains("userId=,")){
-				String smReplace = objectToString.replace("userId=","userId=\"\"");
-				try {
-					m = gson.fromJson(smReplace,classOFM);
-					
-				} catch (JsonSyntaxException e1) {
-					Utils.prtObErrMess(this.getClass(),e1.getMessage());
-					e1.printStackTrace();
-					return null;
+			// try getting rid of some common issues
+			// first get rid of { and }
+			String smReplace = objectToString.replace("{","");
+			smReplace = smReplace.replace("}","");
+			// next, break up att=value fields
+			String[] partsSepByEqual = smReplace.split(",");
+			smReplace = ""; // create a new gson string in smReplace
+			// next, make sure that null values (att=, or att=) are replace by ""
+			for(String pairSepByEqual:partsSepByEqual){
+				String[] tokens = pairSepByEqual.split("=");
+				String newTokensSepByEqual = pairSepByEqual;
+				if(tokens.length==1){
+					newTokensSepByEqual = tokens[0]+"="+"\"\"";
 				}
-			}else{
-				Utils.prtObErrMess(this.getClass(),e.getMessage());
-				e.printStackTrace();
-				return null;
+				if(tokens.length==2){
+					// check to see that a string with spaces in the
+					//   value gets surrounded by quotes
+					String[] spaceParts=tokens[1].split(" ");
+					if(spaceParts.length>1){
+						// replace att=this has spaces
+						// with att="this has spaces"
+						newTokensSepByEqual = tokens[0]+"="+"\""+tokens[1]+"\"";
+					}
+				}
+				if(newTokensSepByEqual!=null){
+					smReplace = smReplace+newTokensSepByEqual+",";
+				}
 			}
-		}
+			// get rid of last comma
+			smReplace = smReplace.substring(0,smReplace.length()-1);
+			// add back in braces {}
+			smReplace = "{"+smReplace+"}";
+			// try parsing gson again
+			m = gson.fromJson(smReplace,classOFM);
+//			// try userId being null problem
+//			if(objectToString.contains("userId=,") || 
+//					String smReplace = objectToString.replace("userId=","userId=\"\"");
+//					objectToString.contains("userId= ") ||
+//					objectToString.contains("userId=}")){
+//				try {
+//					m = gson.fromJson(smReplace,classOFM);
+//					
+//				} catch (JsonSyntaxException e1) {
+//					Utils.prtObErrMess(this.getClass(),e1.getMessage());
+//					e1.printStackTrace();
+//					return null;
+//				}
+//			}else{
+//				
+//				Utils.prtObErrMess(this.getClass(),e.getMessage());
+//				e.printStackTrace();
+//				return null;
+//			}
+		} 
 		return m;
 	}
 	

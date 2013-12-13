@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import misc.HowTos;
 import misc.PosClDetailed;
 import misc.PositionClass;
 import misc.Trades;
@@ -32,8 +33,10 @@ public class BasicTableModelSetup {
 	boolean doTableModelsCreate= true;
 	boolean doSendTradeData = true;
 	boolean doSendPosData = true;
+	boolean doSendHowToData = true;
 	boolean doReadTradeData = true;
 	boolean doReadPosData = true;
+	boolean doReadHowToData = true;
 	boolean doPosSubscription = true;
 
 	public static void main(String[] args) {
@@ -62,13 +65,46 @@ public class BasicTableModelSetup {
 			btms.adminPass = argPairs.get("adminPass");
 		}
 		
+		if(argPairs.containsKey("doRemoveTradeItems")){
+			btms.doRemoveTradeItems = new Boolean(argPairs.get("doRemoveTradeItems"));
+		}
+		if(argPairs.containsKey("doRemovePosItems")){
+			btms.doRemovePosItems = new Boolean(argPairs.get("doRemovePosItems"));
+		}
+		if(argPairs.containsKey("doTableModelsCreate")){
+			btms.doTableModelsCreate = new Boolean(argPairs.get("doTableModelsCreate"));
+		}
+		if(argPairs.containsKey("doSendTradeData")){
+			btms.doSendTradeData = new Boolean(argPairs.get("doSendTradeData"));
+		}
+		if(argPairs.containsKey("doSendPosData")){
+			btms.doSendPosData = new Boolean(argPairs.get("doSendPosData"));
+		}
+		if(argPairs.containsKey("doSendHowToData")){
+			btms.doSendHowToData = new Boolean(argPairs.get("doSendHowToData"));
+		}
+		if(argPairs.containsKey("doReadTradeData")){
+			btms.doReadTradeData = new Boolean(argPairs.get("doReadTradeData"));
+		}
+		if(argPairs.containsKey("doReadPosData")){
+			btms.doReadPosData = new Boolean(argPairs.get("doReadPosData"));
+		}
+		if(argPairs.containsKey("doReadHowToData")){
+			btms.doReadHowToData = new Boolean(argPairs.get("doReadHowToData"));
+		}
+		if(argPairs.containsKey("doPosSubscription")){
+			btms.doPosSubscription = new Boolean(argPairs.get("doPosSubscription"));
+		}
+		
 		btms.removeTradeItems();
 		btms.removePosItems();
 		btms.tableModelsCreate();
 		btms.sendTradeData();
 		btms.sendPosData();
+		btms.sendHowToData();
 		btms.readTradeData();
 		btms.readPosData();
+		btms.readHowToData();
 		btms.posSubscription();
 		System.exit(0);
 	}
@@ -291,4 +327,58 @@ public class BasicTableModelSetup {
 		mlsr.disconnect();
 	}
 
+	private void readHowToData(){
+		readData(doReadHowToData, HowTos.class);
+	}
+	private void sendHowToData(){
+		sendData(this.doSendHowToData,HowTos.class,"howTos.csv");
+	}
+	
+	private <T> void readData(boolean shouldI, Class<T> classToSend){
+		if(!shouldI)return;
+		MeteorListSendReceive<T> mlsr = null;
+		try {
+			mlsr = 
+					new MeteorListSendReceive<T>(100, 
+							classToSend, meteorUrl, meteorPort, 
+							adminEmail,adminPass,"", "", "tester");
+		} catch (URISyntaxException e) {
+			throw Utils.IllState(e);
+		}
+		
+		
+
+		List<T> list = mlsr.getList(null);
+		Utils.prtListItems(list);
+		mlsr.disconnect();
+		
+	}
+
+	private <T> void sendData(boolean shouldI, Class<T> classToSend, String csvFileName){
+		MeteorListSendReceive<T> mlsr = null;
+		try {
+			mlsr = 
+					new MeteorListSendReceive<T>(100, 
+							classToSend, meteorUrl, meteorPort, 
+							adminEmail,adminPass,"", "", "tester");
+		} catch (URISyntaxException e) {
+			throw Utils.IllState(e);
+		}
+		
+
+		List<String[]> csvData = Utils.getCSVData(this.getClass(), csvFileName);
+		List<T> listToSend = 
+				Utils.listFromCsv(classToSend, csvData);
+		try {
+			String[] result = mlsr.sendList(listToSend);
+			Utils.prt(Arrays.toString(result));
+			mlsr.disconnect();
+		} catch (InterruptedException e) {
+			throw Utils.IllState(e);
+			
+		}
+		
+	}
+
 }
+

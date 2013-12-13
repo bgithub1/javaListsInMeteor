@@ -1,0 +1,9 @@
+_id,userId,topic,howTo
+2a,"",General,"Welcome to subscriptTables.  SubscriptTables lets you send receive and subscribe to lists from Meteor or DDP clients by calling the Meteor  method addJavaListData (For how this is done in the SubscriptTables Meteor project see SubscriptTables/lib/subscriptTablesLib/exampleCreateTableAndDataFromClient.js and SubscriptTables/lib/subscriptTablesLib/serverDefs.js.  For how this is done from java see the github repo JavaListsInMeteor and the maven project java-lists-in-meteor in that repo).  "
+3a,"",TableModels,"You define TableModels which include column definitions for grouping and totaling. The lists that you send to Meteor either in the Meteor client code or via java (ddp) will be displayed according to these TableModels.  Both  exampleCreateTableAndDataFromClient.js and java-lists-in-meteor have javascript and java examples for how to create TableModels and how to send them to Meteor via Meteor method calls."
+4a,"",Filtering,"To filter for records with a specfic value left click on any field in any record.  The field value will appear next to the Clear button at the top of the Table.  You can click on as many as you like.  When you want to apply the filter click on the filter button.  When you want to clear the filter click on the Clear button."
+5a,"",Sorting,"To sort columns click on the column header.  If you want to sort by several columns click on the innermost sort column first and the outermost sort column last."
+6a,"","Hiding Columns","If you want to hide columns click on the button with the column name on the right side of the Table and the column will disappear.  Any column values that have been defined as totaling columns (either regular or weighted average) will be show the aggregate total grouped by whatever columns remain.  Clicking the column button again will redisplay the column."
+ 
+
+
