@@ -1,0 +1,1 @@
+java -classpath target/java-lists-in-meteor-0.0.1-SNAPSHOT.jar com.billybyte.meteorjava.runs.MeteorSendPeriodicChanges  "metUrl=subscripttables.meteor.com" "metPort=80" "adminEmail=user1@demo.com" "adminPass=user1pass" "sleepTimeMills=4000" "tOrP=t"

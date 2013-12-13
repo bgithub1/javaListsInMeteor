@@ -1,0 +1,8 @@
+_id,myFirstName,myLastName,shortName,myQty,myPrice
+1a,Billy,Byte,IBM,10,20
+2a,Pete,Kutrum,IBM,15,30
+3a,Mike,Byte,IBM,15,40
+1b,Billy,Byte,AAPL,20,450
+2b,Pete,Kutrum,AAPL,25,460
+3b,Mike,Byte,AAPL,20,470
+
