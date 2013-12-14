@@ -16,6 +16,9 @@ public class DdpClientWithEmail extends DdpClient {
 	private final GmailClient emailClient;
 	private final String[] recipList;
 	private final String ddpClientName;
+	private final String gmailUsername;
+	private final String gmailPw;
+	
 	
 	public DdpClientWithEmail(String meteorServerIp, Integer meteorServerPort, String gmailUsername, String gmailPw) 
 			throws URISyntaxException {
@@ -26,6 +29,8 @@ public class DdpClientWithEmail extends DdpClient {
 			String meteorServerIp, Integer meteorServerPort, String gmailUsername, String gmailPw, String clientName) 
 			throws URISyntaxException {
 		super(meteorServerIp, meteorServerPort);
+		this.gmailUsername = gmailUsername;
+		this.gmailPw = gmailPw;
 		if(gmailUsername!=null && gmailUsername.compareTo("    ")>0 
 				&& gmailPw!=null && gmailPw.compareTo("    ")>0){
 				this.emailClient = new GmailClient(gmailUsername, gmailPw);
@@ -80,6 +85,26 @@ public class DdpClientWithEmail extends DdpClient {
 		} catch (MessagingException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public GmailClient getEmailClient() {
+		return emailClient;
+	}
+
+	public String[] getRecipList() {
+		return recipList;
+	}
+
+	public String getDdpClientName() {
+		return ddpClientName;
+	}
+
+	public String getGmailUsername() {
+		return gmailUsername;
+	}
+
+	public String getGmailPw() {
+		return gmailPw;
 	}
 	
 	

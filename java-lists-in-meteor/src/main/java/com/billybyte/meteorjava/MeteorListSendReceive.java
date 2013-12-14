@@ -34,11 +34,30 @@ import com.google.gson.stream.MalformedJsonException;
 
 /**
  * 
- * @author billybyte
- * Send and Receive java.util.List instances to and from Meteor
- * Send TableModels that define how Meteor will display the lists.
  * 
- *  See main for example usage
+ * @author billybyte
+ * MeteorListSendReceive is a generic class that will allow you to send and receive lists of 
+ * type M (generic) data to and from the Meteor project subscripttables, 
+ * which can be found on github at https://github.com/bgithub1/SubscriptTables.
+ * 
+ * For every type of list that you want to send and receive, you should instantiate
+ * one of these classes.  Then call it methods:
+ * 	 	sendList: to send java.util.list<M> data to Meteor;
+ * 		getList: to get java.util.list<M> data from Meteor;
+ * 		subscribeToListData: to subscribe to java.util.list<M> data when it changes on Meteor;
+ * 		sendTableModelList: to send java.util.list<TableModel> to Meteor to govern
+ * 			the way Meteor displays the java.util.lists.
+ * 
+ * 
+ * 
+ *  See com.billybyte.meteorjava.runs.BasicTableModelSetup.java for example usage as to 
+ *    sending TableModels, sending java.util.list lists and receiving these lists back
+ *    from Meteor either by call a Meteor method or by subscribing to changes on Meteor .
+ *    All of the Meteor calls in this class coincide with Meteor methods in the Meteor project
+ *    subscripttables, which can be found on github at https://github.com/bgithub1/SubscriptTables.
+ *  
+ *  See com.billybyte.meteorjava.runs.MeteorSendPeriodChanges.java for another example usage.
+ *  
  *
  * @param <M>
  */
@@ -49,17 +68,17 @@ public class MeteorListSendReceive<M> {
 	private final Class<M> classOFM;
 	private final int millsToWaitForConnect = 300;
 	private final int triesToConnect = 3;
-	private final String clientName;
-	private final String meteorServerIp;
-	private final int meteorServerPort;
+//	private final String clientName;
+//	private final String meteorServerIp;
+//	private final int meteorServerPort;
 	private final AtomicReference<MeteorLoginToken> loginToken = new AtomicReference<MeteorLoginToken>(); 
-	private final String emailUsername;
-	private final String emailPw;
+//	private final String emailUsername;
+//	private final String emailPw;
 	
 	/**
 	 * 
-	 * @param topLevelQueueCapacity
-	 * @param classOFM
+	 * @param topLevelQueueCapacity - int that defines how deep your Blocking queues should be.  Suggested size is 100
+	 * @param classOFM - class of item in java lists.
 	 * @param meteorServerIp
 	 * @param meteorServerPort
 	 * @param emailUsername
@@ -81,11 +100,11 @@ public class MeteorListSendReceive<M> {
 			String clientName,
 			MeteorLoginToken mltFromPrevLogin) throws URISyntaxException {
 		this.ddpClient = new DdpClientWithEmail(meteorServerIp, meteorServerPort, notifyEmail, notifyEmailPw, clientName);
-		this.clientName = clientName;
-		this.emailUsername = emailUsername;
-		this.emailPw = emailPw;
-		this.meteorServerIp = meteorServerIp;
-		this.meteorServerPort = meteorServerPort;
+//		this.clientName = clientName;
+//		this.emailUsername = emailUsername;
+//		this.emailPw = emailPw;
+//		this.meteorServerIp = meteorServerIp;
+//		this.meteorServerPort = meteorServerPort;
 		this.classOFM = classOFM;
 		
 		start();
@@ -99,6 +118,15 @@ public class MeteorListSendReceive<M> {
 			loginToken.set(mltFromPrevLogin);
 		}
 	}
+	
+	public  MeteorListSendReceive(
+			MeteorListSendReceive<?> previousMlsr,Class<M> classOfM){
+			this.ddpClient = previousMlsr.getDdpClient();
+			loginToken.set(previousMlsr.getMeteorLoginToken());
+			this.classOFM = classOfM;
+			
+	}
+
 	
 	public MeteorListSendReceive(
 			int topLevelQueueCapacity,
@@ -239,7 +267,7 @@ public class MeteorListSendReceive<M> {
 			}
 		}
 		if(!success){
-			throw Utils.IllState(this.getClass(), "Ddd client " + clientName + " can't connect to Meteor server on ip " + meteorServerIp + " and port " + meteorServerPort);
+			throw Utils.IllState(this.getClass(), "Ddd client " + ddpClient.getDdpClientName() + " can't connect to Meteor server on ip " + ddpClient.getMeteorServerIp() + " and port " +ddpClient.getMeteorServerPort());
 		}
 	}
 
@@ -407,25 +435,6 @@ public class MeteorListSendReceive<M> {
 			smReplace = "{"+smReplace+"}";
 			// try parsing gson again
 			m = gson.fromJson(smReplace,classOFM);
-//			// try userId being null problem
-//			if(objectToString.contains("userId=,") || 
-//					String smReplace = objectToString.replace("userId=","userId=\"\"");
-//					objectToString.contains("userId= ") ||
-//					objectToString.contains("userId=}")){
-//				try {
-//					m = gson.fromJson(smReplace,classOFM);
-//					
-//				} catch (JsonSyntaxException e1) {
-//					Utils.prtObErrMess(this.getClass(),e1.getMessage());
-//					e1.printStackTrace();
-//					return null;
-//				}
-//			}else{
-//				
-//				Utils.prtObErrMess(this.getClass(),e.getMessage());
-//				e.printStackTrace();
-//				return null;
-//			}
 		} 
 		return m;
 	}
@@ -626,15 +635,24 @@ public class MeteorListSendReceive<M> {
 
 
 	public String getEmailUsername() {
-		return emailUsername;
+		return ddpClient.getGmailUsername();
 	}
 
 
 	public String getEmailPw() {
-		return emailPw;
+		return ddpClient.getGmailPw();
 	}
 	
 	public MeteorLoginToken getMeteorLoginToken(){
 		return loginToken.get();
 	}
+	
+	DdpClientWithEmail getDdpClient(){
+		return this.ddpClient;
+	}
+
+	Class<M> getClassOFM() {
+		return classOFM;
+	}
+	
 }

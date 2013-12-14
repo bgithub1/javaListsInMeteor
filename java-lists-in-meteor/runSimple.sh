@@ -1,0 +1,1 @@
+java -classpath target/java-lists-in-meteor-0.0.1-SNAPSHOT.jar com.billybyte.meteorjava.runs.SimpleSendRecPosClDetailed  "metUrl=localhost" "metPort=3000" "adminEmail=admin1@demo.com" "adminPass=admin1"

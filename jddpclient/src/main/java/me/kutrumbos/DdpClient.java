@@ -22,7 +22,8 @@ import com.google.gson.Gson;
  *
  */
 public class DdpClient extends Observable {
-
+	private final String meteorServerIp;
+	private final Integer meteorServerPort;
 	private int currentId;
 	private final Map<Integer,String> identifiers;
 	private WebSocketClient wsClient;
@@ -44,6 +45,8 @@ public class DdpClient extends Observable {
 	 */
 	public DdpClient(String meteorServerIp, Integer meteorServerPort) throws URISyntaxException{
 		if(meteorServerPort == null) meteorServerPort = 3000;
+		this.meteorServerPort = meteorServerPort;
+		this.meteorServerIp = meteorServerIp;
 		this.meteorServerAddress = "ws://"+meteorServerIp+":"+meteorServerPort.toString()+"/websocket";
 		this.currentId = 0;
 		this.identifiers = new ConcurrentHashMap<Integer,String>();
@@ -308,6 +311,14 @@ public class DdpClient extends Observable {
 	public void received(String msg) {
 		this.setChanged();
 		this.notifyObservers(msg);
+	}
+
+	public String getMeteorServerIp() {
+		return meteorServerIp;
+	}
+
+	public Integer getMeteorServerPort() {
+		return meteorServerPort;
 	}
 	
 }
