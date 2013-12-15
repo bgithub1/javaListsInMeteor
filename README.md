@@ -20,25 +20,21 @@ This class has all of the code to:
    5.  Receive java.util.list instances back from Meteor.
    6.  Subscribe to changes in those instances that have been sent to Meteor.
 
-SETUP:
-To use java-lists-in-meteor:
-	1.	Clone the github repo at https://github.com/bgithub1/javaListsInMeteor ;
-	2.	Clone the githib repo for SubscriptTables at https://github.com/bgithub1/SubscriptTables ;
-	3.	Deploy (locally or on meteor.com) the Meteor project SubscriptTables ;
-	4.	Within a bash terminal, run the sh script: 
-		sh runSetupTableModelsAndSendReceiveLists.sh ;
-		(it is located in the folder java-lists-in-meteor in the folder to which you cloned javaListsInMeteor)
-		This script will use the url localhost and the port 3000 to communicate with Meteor.
-		It will also login to meteor using the admin email admin1@demo.com and the admin password
-		  "admin1" (no quotes).
-		If you want to change these, see the java class 
-		  com.billybyte.meteorjava.runs.SetupTableModelsAndSendReceiveLists for details about 
-		  specifing command line args like "metUrl=localhost" .
-	5.  At this point, you should have several collections in your deployed Meteor project:
-			1. masterTableDefs - a collecton that holds the instances of com.billybyte.meteorjava.MeteorTableModel that you sent to Meteor in runSetupTableModelsAndSendReceiveLists.sh ;
-			2. misc.PosClDetailed - a collection of instances of misc.PosClDetailed (in JSON);
-			3. misc.Trades - another example of java instances sent to Meteor ;
-			4. misc.HowTos - another example of java instances sent to Meteor ;
+SETUP:  
+To use java-lists-in-meteor:  
+   1. Clone the github repo at https://github.com/bgithub1/javaListsInMeteor ;
+   2. Clone the githib repo for SubscriptTables at https://github.com/bgithub1/SubscriptTables ;
+   3. Deploy (locally or on meteor.com) the Meteor project SubscriptTables ;
+   4. Within a bash terminal, run the sh script:   
+      sh runSetupTableModelsAndSendReceiveLists.sh (it is located in the folder java-lists-in-meteor in the folder to which you cloned javaListsInMeteor)
+      This script will use the url localhost and the port 3000 to communicate with Meteor.
+      It will also login to meteor using the admin email admin1@demo.com and the admin password "admin1" (no quotes).
+      If you want to change these, see the java class com.billybyte.meteorjava.runs.SetupTableModelsAndSendReceiveLists for details about specifing command line args like "metUrl=localhost" .
+   5.  At this point, you should have several collections in your deployed Meteor project:  
+      masterTableDefs - a collecton that holds the instances of com.billybyte.meteorjava.MeteorTableModel that you sent to Meteor in runSetupTableModelsAndSendReceiveLists.sh ;  
+      *  misc.PosClDetailed - a collection of instances of misc.PosClDetailed (in JSON);  
+      *  misc.Trades - another example of java instances sent to Meteor ;  
+      *  misc.HowTos - another example of java instances sent to Meteor ;  
 
 
 
