@@ -30,8 +30,8 @@ public class SetupTableModelsAndSendReceiveLists {
 	String adminPass = "admin1";
 	
 	// the following variables determine which example functions you run
-	boolean doRemoveTradeItems = true;
-	boolean doRemovePosItems = true;
+	boolean doRemoveTradeItems = false;
+	boolean doRemovePosItems = false;
 	boolean doTableModelsCreate= true;
 	boolean doSendTradeData = true;
 	boolean doSendPosData = true;
