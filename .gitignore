@@ -1,0 +1,8 @@
+java-lists-in-meteor/target/*
+java-lists-in-meteor/.settings/*
+java-lists-in-meteor/.classpath
+java-lists-in-meteor/target
+jddpclient/target/*
+jddpclient/.settings/*
+jddpclient/.classpath
+jddpclient/target
