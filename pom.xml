@@ -8,6 +8,9 @@
   <packaging>pom</packaging>
   <name>javaListsInMeteor</name>
   
+<!-- force new commit id  20150618 19:23:00  -->
+  
+  
   <modules>
     <module>java-lists-in-meteor</module>
     <module>jddpclient</module>
