@@ -2,6 +2,8 @@ package com.billybyte.meteorjava;
 
 public class MeteorTableModel {
 /**
+ * 	Several constructors:
+ * first construct some columns using the 
  		var c1 = new tableColumnClass('myFirstName','myFirstName','myFirstName');
 		var c2 = new tableColumnClass('myLastName','myLastName','myLastName');
 		var c3 = new tableColumnClass('myDouble','myDouble','myDouble',['myDouble',['myDouble']]);
@@ -23,6 +25,13 @@ public class MeteorTableModel {
 		this.tableColumnClassArr = tableColumnClassArr;
 	}
 
+	public MeteorTableModel(Class<?> classOfTable,MeteorColumnModel[] tableColumnClassArr){
+		this(classOfTable, classOfTable.getName(), classOfTable.getName(), tableColumnClassArr);
+	}
+
+	public MeteorTableModel(String classNameOfTable,MeteorColumnModel[] tableColumnClassArr) throws ClassNotFoundException{
+		this(Class.forName(classNameOfTable), classNameOfTable, classNameOfTable, tableColumnClassArr);
+	}
 
 	public MeteorColumnModel[] getTableColumnClassArr() {
 		return tableColumnClassArr;

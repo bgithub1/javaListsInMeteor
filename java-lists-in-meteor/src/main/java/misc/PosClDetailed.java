@@ -1,6 +1,11 @@
 package misc;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.billybyte.meteorjava.runs.SimpleSendRecPosClDetailed;
+import com.billybyte.meteorjava.staticmethods.Utils;
 
 
 public class PosClDetailed extends PositionClass {
@@ -22,10 +27,16 @@ public class PosClDetailed extends PositionClass {
 		this.type = parts[l++];
 		this.exch = parts[l++];
 		this.curr = parts.length > 3 ? parts[l++] : "USD";
-		this.year = parts.length > 4 ? new Integer(parts[l++]) : null;
-		this.month = parts.length > 5 ? new Integer(parts[l++]) : null;
-		this.pc = parts.length > 6 ? parts[l++] : null;
-		this.strike = parts.length > 7 ? new BigDecimal(parts[l++]) : null;
+		Integer monthYear = parts.length > 4 ? new Integer(parts[l++]) : null;
+		if(monthYear!=null){
+			this.year = new Integer(monthYear.toString().substring(0,4));
+			this.month = new Integer(monthYear.toString().substring(4,6));
+		}else{
+			this.year = null;
+			this.month = null;
+		}
+		this.pc = parts.length > 5 ? parts[l++] : null;
+		this.strike = parts.length > 6 ? new BigDecimal(parts[l++]) : null;
 	}
 	
 	public PosClDetailed(PositionClass pci){
@@ -73,5 +84,23 @@ public class PosClDetailed extends PositionClass {
 				+ getPc() + ", " + getStrike() + ", " + super.toString();
 	}
 
+	public static void main(String[] args) {
+		// first get csv data
+		List<String[]> csvData = Utils.getCSVData(SimpleSendRecPosClDetailed.class, "posClassfile.csv");
+		// next convert the csv data into java.util.list<Position>
+		List<PositionClass> posList = 
+				Utils.listFromCsv(PositionClass.class, csvData);
+		// next, make a list of PosClDetailed from the Position objects b/c
+		//  PosClDetailed has more fields that I want to show in Meteor.
+		List<PosClDetailed> pcdList = new ArrayList<PosClDetailed>();
+		for(PositionClass posCl : posList){
+			PosClDetailed pcd = new PosClDetailed(
+					posCl);
+			pcdList.add(pcd);
+		}
+		for(PosClDetailed pcd : pcdList){
+			Utils.prt(pcd.toString());
+		}
+	}
 
 }
