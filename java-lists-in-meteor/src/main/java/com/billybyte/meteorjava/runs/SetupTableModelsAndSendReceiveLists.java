@@ -32,14 +32,14 @@ public class SetupTableModelsAndSendReceiveLists {
 	// the following variables determine which example functions you run
 	boolean doRemoveTradeItems = false;
 	boolean doRemovePosItems = false;
-	boolean doTableModelsCreate= true;
-	boolean doSendTradeData = true;
-	boolean doSendPosData = true;
-	boolean doSendHowToData = true;
-	boolean doReadTradeData = true;
-	boolean doReadPosData = true;
-	boolean doReadHowToData = true;
-	boolean doPosSubscription = true;
+	boolean doTableModelsCreate= false;
+	boolean doSendTradeData = false;
+	boolean doSendPosData = false;
+	boolean doSendHowToData = false;
+	boolean doReadTradeData = false;
+	boolean doReadPosData = false;
+	boolean doReadHowToData = false;
+	boolean doPosSubscription = false;
 	MeteorListSendReceive<?> example;
 
 	public static void main(String[] args) {
