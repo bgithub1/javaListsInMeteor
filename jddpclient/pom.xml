@@ -7,7 +7,10 @@
   </parent>
 
   
-  <groupId>me.kutrumbos</groupId>
+<!--
+  <groupId>me.kutrumbos</groupId> 
+ -->
+  <groupId>com.billybyte</groupId>
   <artifactId>jddpclient</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <build>
