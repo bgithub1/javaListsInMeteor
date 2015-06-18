@@ -6,6 +6,7 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
 
+<!-- force new commit id  20150618 19:19:00  -->
 
   <groupId>com.billybyte</groupId>
   <artifactId>java-lists-in-meteor</artifactId>
