@@ -18,6 +18,7 @@
     <plugins>
 	    <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
+	    <version>3.1</version>
         <configuration>
 	          <source>1.6</source>
 	          <target>1.6</target>
@@ -55,9 +56,10 @@
       <scope>test</scope>
     </dependency>
  	<dependency>
-		<groupId>me.kutrumbos</groupId>
+		<!--<groupId>me.kutrumbos</groupId>-->
+		<groupId>com.billybyte</groupId>
 		<artifactId>jddpclient</artifactId>
-		<version>1.0</version>
+  		<version>0.0.1-SNAPSHOT</version>
 	</dependency>
   	<dependency>
   		<groupId>com.thoughtworks.xstream</groupId>
