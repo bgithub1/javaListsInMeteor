@@ -12,6 +12,7 @@
   <artifactId>java-lists-in-meteor</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <description>read, write and subscribe java.util.list between a Meteor sever and a java ddp client</description>
+	<packaging>jar</packaging>
 
   <build>
     <plugins>
