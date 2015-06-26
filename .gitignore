@@ -6,3 +6,5 @@ jddpclient/target/*
 jddpclient/.settings/*
 jddpclient/.classpath
 jddpclient/target
+bin
+bin/*
