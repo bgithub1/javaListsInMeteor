@@ -29,9 +29,13 @@ public class MeteorTableModel {
 		this(classOfTable, classOfTable.getName(), classOfTable.getName(), tableColumnClassArr);
 	}
 
-	public MeteorTableModel(String classNameOfTable,MeteorColumnModel[] tableColumnClassArr) throws ClassNotFoundException{
-		this(Class.forName(classNameOfTable), classNameOfTable, classNameOfTable, tableColumnClassArr);
-	}
+//	public MeteorTableModel(String nameOfTable,MeteorColumnModel[] tableColumnClassArr) throws ClassNotFoundException{
+////		this(Class.forName(classNameOfTable), classNameOfTable, classNameOfTable, tableColumnClassArr);
+//		this._id = nameOfTable;
+//		this.displayTableName = nameOfTable;
+//		this.collectionName = nameOfTable;
+//		this.tableColumnClassArr = tableColumnClassArr;
+//	}
 
 	public MeteorColumnModel[] getTableColumnClassArr() {
 		return tableColumnClassArr;

@@ -1,7 +1,7 @@
 javaListsInMeteor
 ====================  
 
-javaListsInMeteor is contains 2 Maven projects:  
+javaListsInMeteor contains 2 Maven projects:  
    1.  jddpclient - a basic Meteor DDP client;  
    2.  java-lists-in-meteor - contains classes that allow you to send, receive java.util.list items to/from the Meteor project SubscriptTables,  and susbscribe to changes that occur on SubscriptTables.  
 

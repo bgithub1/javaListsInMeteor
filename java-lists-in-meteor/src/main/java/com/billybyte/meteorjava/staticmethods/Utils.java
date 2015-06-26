@@ -263,7 +263,7 @@ public class Utils {
 		InputStream stream = clazz.getResourceAsStream(fileName);
 		return stream;
 	}
-	public static ArrayList<String[]> getCSVData(Class<?> classInPackageOfFile, String csvFileName){
+	public static List<String[]> getCSVData(Class<?> classInPackageOfFile, String csvFileName){
 		if(classInPackageOfFile==null)return getCSVData(csvFileName);
 		BufferedReader bf = getBufferedReaderAsResource(classInPackageOfFile, csvFileName);
 		CSVReader reader = new CSVReader(bf);
