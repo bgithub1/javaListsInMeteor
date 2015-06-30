@@ -34,6 +34,11 @@
         <displayName>myLastName</displayName>
       </com.billybyte.meteorjava.MeteorColumnModel>
       <com.billybyte.meteorjava.MeteorColumnModel>
+        <colName>shortName</colName>
+        <nameInDoc>shortName</nameInDoc>
+        <displayName>shortName</displayName>
+      </com.billybyte.meteorjava.MeteorColumnModel>
+      <com.billybyte.meteorjava.MeteorColumnModel>
         <colName>myQty</colName>
         <nameInDoc>myQty</nameInDoc>
         <displayName>myQty</displayName>

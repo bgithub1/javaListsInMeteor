@@ -18,7 +18,11 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
 /**
- * 
+ * JsonNestedList provides a nested set of lists which allow the caller
+ *   to see all possible values for any given set of previous choices
+ *   JsonNestedList end up being json when they are written to mongo or meteor.
+ *   The class MeteorValidator holds a JsonNestedList, which the meteor client
+ *     uses to help the user make field drop-down selection choices.
  * @author bperlman1
  *
  */
@@ -28,6 +32,12 @@ public class JsonNestedList {
 	public static final String KEY_ID = "key";
 	public static final String TOP_KEY = "top";
 	public static final String TOP_LEVEL = "top";
+
+	// instance variables
+	private final String key;
+	private final String levelName;
+	private final List values;
+	
 	
 	@SuppressWarnings("unused")
 	private static final Object[][] DEFAULT_SN_ARRAY = {
@@ -64,11 +74,11 @@ public class JsonNestedList {
 		};
 
 	
-	private final String key;
-	private final String levelName;
-	private final List values;
-	
-	
+	/**
+	 * 
+	 * @param key
+	 * @param levelName
+	 */
 	public JsonNestedList(String key,String levelName){
 		this.key = key;
 		this.values = new ArrayList();
@@ -106,6 +116,17 @@ public class JsonNestedList {
 		
 	}
 
+	
+	public static Map buildJnestMap(List<String[]> listOfPossChoices){
+		Object[][] ll = new Object[listOfPossChoices.size()][listOfPossChoices.get(0).length];
+		for(int i = 0;i<listOfPossChoices.size();i++){
+			ll[i] = listOfPossChoices.get(i);
+		}
+		return buildNestedMap(ll);
+		// now find the
+	}
+	
+	
 	@SuppressWarnings("unchecked")
 	private static Map buildNestedMap(Object[][] levelList){
 		Map m = new HashMap();
