@@ -60,7 +60,7 @@
 
 
   <com.billybyte.meteorjava.MeteorTableModel>
-    <_id>misc.TradesDetail</_id>
+    <_id>misc.TradesSummary</_id>
     <displayTableName>My Test Class With Detail</displayTableName>
     <collectionName>misc.Trades</collectionName>
     <tableColumnClassArr>
@@ -156,6 +156,11 @@
     <displayTableName>Position Detail</displayTableName>
     <collectionName>misc.PosClDetailed</collectionName>
     <tableColumnClassArr>
+      <com.billybyte.meteorjava.MeteorColumnModel>
+        <colName>_id</colName>
+        <nameInDoc>_id</nameInDoc>
+        <displayName>_id</displayName>
+      </com.billybyte.meteorjava.MeteorColumnModel>
       <com.billybyte.meteorjava.MeteorColumnModel>
         <colName>userId</colName>
         <nameInDoc>userId</nameInDoc>
