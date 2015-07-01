@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -365,5 +367,22 @@ public class Utils {
 		}
 		return argPairs;
 	}
+	public static Set<String> readSetData(String fn){
+		Set<String> ret = new TreeSet<String>();
+		File file = new File(fn);
+		try {
+			Reader fr  = new FileReader( file);
+			String data=null;
+			BufferedReader br = new BufferedReader(fr);
+			while((data =br.readLine())!= null){
+				ret.add(data);
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return ret;
+	}		
 
 }

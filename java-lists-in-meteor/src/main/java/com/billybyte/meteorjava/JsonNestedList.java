@@ -14,6 +14,7 @@ import java.util.TreeSet;
 import java.util.List;
 import java.util.Map;
 
+import com.billybyte.meteorjava.staticmethods.Utils;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
@@ -32,6 +33,7 @@ public class JsonNestedList {
 	public static final String KEY_ID = "key";
 	public static final String TOP_KEY = "top";
 	public static final String TOP_LEVEL = "top";
+	public static final String DOT_REPLACE = "__";
 
 	// instance variables
 	private final String key;
@@ -134,7 +136,12 @@ public class JsonNestedList {
 		for(int i = 0;i<levelList.length;i++){
 			Object[] levels = levelList[i];
 			for(int j=0;j<levels.length-1;j++){
-				Object key = levels[j];
+//				Object key = levels[j];
+				String key = levels[j].toString();
+				if(key.contains(".")){
+					key = key.replace(".", DOT_REPLACE);
+				}
+				
 				if(key==null){
 					key = "";
 				}
@@ -145,7 +152,8 @@ public class JsonNestedList {
 				}
 				m = inner;
 			}
-			Object lastLevel = levels[levels.length-1];
+//			Object lastLevel = levels[levels.length-1];
+			String lastLevel = levels[levels.length-1].toString().replace(".", DOT_REPLACE);;
 			m.put(lastLevel, lastLevel);
 			m=ret;
 		}
@@ -221,7 +229,7 @@ public class JsonNestedList {
 	public static void main(String[] args) {
 		
 		String fileName = (args!=null && args.length>0) ? args[0] : "shortNames.txt";
-		Set<String> shortNameSet = readData(fileName);
+		Set<String> shortNameSet = Utils.readSetData(fileName);
 //		MongoWrapper m = null;
 //		try {
 //			
@@ -332,23 +340,6 @@ public class JsonNestedList {
 	
 
 	
-	private static Set<String> readData(String fn){
-		Set<String> ret = new TreeSet<String>();
-		File file = new File(fn);
-		try {
-			Reader fr  = new FileReader( file);
-			String data=null;
-			BufferedReader br = new BufferedReader(fr);
-			while((data =br.readLine())!= null){
-				ret.add(data);
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return ret;
-	}		
 
 	private static final void writeToMeteor(JsonNestedList jnest){
 		

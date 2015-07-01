@@ -3,7 +3,6 @@ package com.billybyte.meteorjava;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,51 +18,40 @@ public class MeteorValidator extends MeteorBaseListItem{
 
 	
 	// this field is really of duplicate of the _id (for later delvelopment)	
-//	private final 	String classNameOfDataToBeValidated;
-//	private final JsonNestedList jnest;
+	@SuppressWarnings("rawtypes")
 	private final Map jnestMap;
 	// this list will be used by the meteor client to control how
 	//  the client iterates it's presentation of drop downs
-//	private final List<String> fieldValidationOrder;
-//	private final Map<String,List<String>> independentFields;
-//	private final List<String> freeFields;
 	private final String tableName;
 	private final List<String> depOrderList;
+	@SuppressWarnings("rawtypes")
 	private final Map independPossChoicesMap ;
 	private final List<String> freeFieldList;
-/*
-	this.tableName = tableName;
-	this.jnestMap = jnestMap;
-	this. depOrderList = depOrderList;
-	this.independPossChoicesMap = independPossChoicesMap;
-	this.freeFieldList = freeFieldList;
-
- * 	
- */
+	
+	/**
+	 * Constructor for MeteorValidator
+	 * @param classOfDataToBeValidated
+	 * @param jnestMap
+	 * @param dependentFieldOrderList
+	 * @param independentFields
+	 * @param freeFields
+	 */
+	@SuppressWarnings("rawtypes")
 	public MeteorValidator(
 			Class<?> classOfDataToBeValidated,
-//			JsonNestedList jnest,
 			Map jnestMap,
-			List<String> fieldValidationOrder,
+			List<String> dependentFieldOrderList,
 			Map<String,List<String>> independentFields,
 			List<String> freeFields) {
 		super(classOfDataToBeValidated.getCanonicalName(),null);
-//		this.jnest = jnest;
 		this.jnestMap = jnestMap;
-//		this.classNameOfDataToBeValidated = classOfDataToBeValidated.getCanonicalName();
-//		this.fieldValidationOrder = fieldValidationOrder;
-//		this.independentFields = independentFields;
-//		this.freeFields = freeFields;
 		this.tableName = this.get_id();
-		this.depOrderList = fieldValidationOrder;
+		this.depOrderList = dependentFieldOrderList;
 		this.independPossChoicesMap = independentFields;
 		this.freeFieldList = freeFields;
 	}
 
 
-//	public JsonNestedList getJnest() {
-//		return jnest;
-//	}
 
 	/**
 	 * 
@@ -71,8 +59,6 @@ public class MeteorValidator extends MeteorBaseListItem{
 	 * @param meteorPort
 	 * @param adminEmail
 	 * @param adminPass
-	 * @param levelList - lists of all possible combinations of fields
-	 * @param levelNames - column names of dependent fields
 	 */
 	public void sendValidator(
 			String meteorUrl,
@@ -134,28 +120,30 @@ public class MeteorValidator extends MeteorBaseListItem{
 	}
 
 
-//	public String getClassNameOfDataToBeValidated() {
-//		return classNameOfDataToBeValidated;
-//	}
-//
-//
-//	public List<String> getFieldValidationOrder() {
-//		return fieldValidationOrder;
-//	}
-//
-//
-//	public Map<String,List<String>> getIndependentFields() {
-//		return independentFields;
-//	}
-//
-//
-//	public List<String> getFreeFields() {
-//		return freeFields;
-//	}
-
-
+	@SuppressWarnings("rawtypes")
 	public Map getJnestMap() {
 		return jnestMap;
+	}
+
+
+	public String getTableName() {
+		return tableName;
+	}
+
+
+	public List<String> getDepOrderList() {
+		return depOrderList;
+	}
+
+
+	@SuppressWarnings("rawtypes")
+	public Map getIndependPossChoicesMap() {
+		return independPossChoicesMap;
+	}
+
+
+	public List<String> getFreeFieldList() {
+		return freeFieldList;
 	}
 
 	

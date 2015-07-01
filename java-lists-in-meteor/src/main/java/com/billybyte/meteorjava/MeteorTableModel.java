@@ -1,5 +1,11 @@
 package com.billybyte.meteorjava;
 
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.billybyte.meteorjava.staticmethods.Utils;
+
 public class MeteorTableModel {
 /**
  * 	Several constructors:
@@ -53,5 +59,39 @@ public class MeteorTableModel {
 		return collectionName;
 	}
 	
+	public static final void sendMeteorTableModels(
+			String meteorUrl,
+			Integer meteorPort,
+			String adminEmail,
+			String adminPass,
+			MeteorTableModel tm){
+
+		List<MeteorTableModel> mtmList = 
+				new ArrayList<MeteorTableModel>();
+		mtmList.add(tm);
+
+		MeteorListSendReceive<MeteorTableModel> mlsrTableModel=null;
+		try {
+			mlsrTableModel = new MeteorListSendReceive<MeteorTableModel>(100, 
+					MeteorTableModel.class, meteorUrl, meteorPort, 
+					adminEmail,adminPass,"", "", "tester");
+		} catch (URISyntaxException e) {
+			throw Utils.IllState(e);
+		}
+		// the mtmList only has one object, but I put in an iteration
+		 //  for future use.
+		for(MeteorTableModel mtm:mtmList){
+			String tableId = mtm.getId();
+			String error = mlsrTableModel.deleteMeteorTableModel( tableId);
+			if(error!=null && error.compareTo("0")!=0){
+				Utils.prtObErrMess(MeteorTableModel.class, error);
+			}
+		}
+		try {
+			mlsrTableModel.sendTableModelList(mtmList);
+		} catch (InterruptedException e) {
+			throw Utils.IllState(e);
+		}
+	}
 	
 }
