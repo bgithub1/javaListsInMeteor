@@ -75,6 +75,12 @@ public class MeteorListSendReceive<M> {
 //	private final String emailUsername;
 //	private final String emailPw;
 	
+	
+	private static final String regexExpressionToEliminateLeadingZeros = 
+			"=[0]{1,}[0-9]{1,}[\\.]{0,1}[0-9]{0,},";
+	private static final String regexExpressionWithoutLeadingZeros = 
+			"[1-9]{1,1}[0-9]{0,}[\\.]{0,1}[0-9]{0,},";
+
 	/**
 	 * 
 	 * @param topLevelQueueCapacity - int that defines how deep your Blocking queues should be.  Suggested size is 100
@@ -176,15 +182,19 @@ public class MeteorListSendReceive<M> {
 		 *   store it in the AtomicReference so that the user can retrieve it.
 		 */
 		public void update(Observable client, Object msg) {
+			JSONObject result =null;
 			try {
 				Utils.prtObMess(this.getClass(), msg.toString());
-				JSONObject result = getMeteorResultObj(msg.toString());
+				result = getMeteorResultObj(msg.toString());
 				if(result==null)return;
 				T ret = convert(client, result);
 				if(ret==null)return;
 				atomicMess.set(ret);
 				cdl.countDown();
 			} catch (Exception e) {
+				System.err.println(this.getClass().getCanonicalName()+"  :  " + e.getMessage());
+				System.err.println("meteor message  :  " + result);
+				e.printStackTrace();
 				atomicException.set(e.getMessage());
 				cdl.countDown();
 			}
@@ -434,6 +444,14 @@ public class MeteorListSendReceive<M> {
 			// add back in braces {}
 			smReplace = "{"+smReplace+"}";
 			// try parsing gson again
+			// fix to get rid of leading zeros in numbers
+			List<String> occurrences = Utils.getRegexMatches(regexExpressionToEliminateLeadingZeros, smReplace);
+			for(int i = 0;i<occurrences.size();i++){
+				String occurrence = occurrences.get(i);
+				List<String> l = Utils.getRegexMatches(regexExpressionWithoutLeadingZeros, occurrence);
+				String numWithoutLeadingZeros = "=" + l.get(0) ;
+				smReplace = smReplace.replace(occurrence, numWithoutLeadingZeros);
+			}
 			m = gson.fromJson(smReplace,classOFM);
 		} 
 		return m;
