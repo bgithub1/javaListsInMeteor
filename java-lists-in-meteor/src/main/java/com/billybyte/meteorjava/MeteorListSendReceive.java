@@ -544,9 +544,13 @@ public class MeteorListSendReceive<M> {
 	public class SubscriptionHandler extends AbstractSubscriptionHandler {
 		private final Object subScriptListLock = new Object();
 		private final List<M> subScriptionList = new ArrayList<M>();
-
+		private final CountDownLatch cdl = new CountDownLatch(1);
 		public SubscriptionHandler(BlockingQueue<SubscriptionMessage> subQueue) {
 			super(subQueue);
+		}
+		
+		public CountDownLatch getCdl(){
+			return this.cdl;
 		}
 		
 		// TODO should we check if it is the proper collection or assume we are only getting subscription updates regarding positions
@@ -561,6 +565,7 @@ public class MeteorListSendReceive<M> {
 				synchronized (subScriptListLock) {
 					subScriptionList.add(m);
 				}
+				cdl.countDown();
 			}
 			
 		}
