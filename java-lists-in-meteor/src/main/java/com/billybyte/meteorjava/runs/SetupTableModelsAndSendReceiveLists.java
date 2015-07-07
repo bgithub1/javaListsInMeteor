@@ -6,14 +6,20 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import misc.HowTos;
 import misc.PosClDetailed;
 import misc.PositionClass;
 import misc.Trades;
 
+import com.billybyte.meteorjava.MeteorListCallback;
 import com.billybyte.meteorjava.MeteorListSendReceive;
 import com.billybyte.meteorjava.MeteorTableModel;
+import com.billybyte.meteorjava.MeteorValidator;
+import com.billybyte.meteorjava.TableChangedByUser;
 import com.billybyte.meteorjava.MeteorListSendReceive.SubscriptionHandler;
 import com.billybyte.meteorjava.staticmethods.Utils;
 /**
@@ -40,6 +46,7 @@ public class SetupTableModelsAndSendReceiveLists {
 	boolean doReadPosData = false;
 	boolean doReadHowToData = false;
 	boolean doPosSubscription = false;
+	boolean doPosSubscriptionWithCallback = false;
 	MeteorListSendReceive<?> example;
 
 	public static void main(String[] args) {
@@ -104,6 +111,9 @@ public class SetupTableModelsAndSendReceiveLists {
 		if(argPairs.containsKey("doPosSubscription")){
 			btms.doPosSubscription = new Boolean(argPairs.get("doPosSubscription"));
 		}
+		if(argPairs.containsKey("doPosSubscriptionWithCallback")){
+			btms.doPosSubscriptionWithCallback = new Boolean(argPairs.get("doPosSubscriptionWithCallback"));
+		}
 		
 		// create a ddp connection that can be re-used
 		try {
@@ -117,6 +127,10 @@ public class SetupTableModelsAndSendReceiveLists {
 			throw Utils.IllState(e);
 		}
 
+		// subscribe to table changes by client
+		ProcessTableChangedByUser ptcb = 
+				btms.new ProcessTableChangedByUser();
+		new Thread(ptcb).run();
 		
 		// run all of the examples.  Each example will check to see 
 		//  if its respective boolean is true.  If not, it won't run.
@@ -130,7 +144,10 @@ public class SetupTableModelsAndSendReceiveLists {
 		btms.readPosData();
 		btms.readHowToData();
 		btms.posSubscription();
-		System.exit(0);
+		btms.posSubscriptionWithCallback();
+		if(!btms.doPosSubscriptionWithCallback){
+			System.exit(0);
+		}
 	}
 	
 	
@@ -308,6 +325,10 @@ public class SetupTableModelsAndSendReceiveLists {
 		
 		try {
 			mlsr.sendList(pcdList);
+			// send a MeteorValidator as well
+			MeteorValidator posMv = PosClDetailed.buildValidator();
+			posMv.sendValidator(meteorUrl, meteorPort, adminEmail, adminPass);
+					
 			if(example==null)mlsr.disconnect();
 		} catch (InterruptedException e) {
 			throw Utils.IllState(e);
@@ -333,6 +354,7 @@ public class SetupTableModelsAndSendReceiveLists {
 		Utils.prtListItems(pdcList);
 		if(example==null)mlsr.disconnect();
 	}
+	
 	
 	@SuppressWarnings("unchecked")
 	public void posSubscription(){
@@ -360,7 +382,35 @@ public class SetupTableModelsAndSendReceiveLists {
 		Utils.prtListItems(handler.getSubscriptList());
 		if(example==null)mlsr.disconnect();
 	}
+			
+			
+	public void posSubscriptionWithCallback(){
+		if(!doPosSubscriptionWithCallback)return;
+		MeteorListSendReceive<PosClDetailed> mlsr = null;
+		try {
+			mlsr = example!=null  ? 
+					new MeteorListSendReceive<PosClDetailed>(example,PosClDetailed.class) :
+					new MeteorListSendReceive<PosClDetailed>(100, 
+							PosClDetailed.class, meteorUrl, meteorPort, 
+							adminEmail,adminPass,"", "", "tester");
+		} catch (URISyntaxException e) {
+			throw Utils.IllState(e);
+		}
+		MeteorListCallback<PosClDetailed> posClDetailedCallback = 
+				new MeteorListCallback<PosClDetailed>() {
+					@Override
+					public void onMessage(String messageType, String id,PosClDetailed convertedMessage) {
+						Utils.prtObMess(this.getClass(), "posClDetailedCallback callback: "+messageType);
+						Utils.prtObMess(this.getClass(), "recId: "+id+", record: " + (convertedMessage!=null ? convertedMessage.toString(): "null message"));
+					}
+		};
+		
+		Utils.prtObMess(this.getClass(),"About to subscribe to Meteor add, updates and removes of this class by Meteor client");
+		mlsr.subscribeToListDataWithCallback(posClDetailedCallback);
+		Utils.prtObMess(this.getClass(), "kill this process once you are done observing add, update and remove callbacks from Meteor");
+	}
 
+	
 	private void readHowToData(){
 		readData(doReadHowToData, HowTos.class);
 	}
@@ -416,5 +466,27 @@ public class SetupTableModelsAndSendReceiveLists {
 		
 	}
 
+	private  class ProcessTableChangedByUser implements Runnable{
+
+		@Override
+		public void run() {
+			BlockingQueue<Map<String, TableChangedByUser>> blockingQueue = 
+					new ArrayBlockingQueue<Map<String,TableChangedByUser>>(10);
+			TableChangedByUser.subscribeToChanges(meteorUrl, meteorPort, adminEmail, adminPass, blockingQueue);
+			boolean keepGoing=true;
+			while(keepGoing){
+				try {
+					Map<String, TableChangedByUser> singleEntryMap = 
+							blockingQueue.take();
+					for(Entry<String, TableChangedByUser> entry : singleEntryMap.entrySet()){
+						Utils.prt(entry.getKey()+","+ (entry.getValue()!=null ? entry.getValue() : "null"));
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	}
 }
 

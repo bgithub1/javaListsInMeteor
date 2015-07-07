@@ -106,11 +106,6 @@ public class MeteorListSendReceive<M> {
 			String clientName,
 			MeteorLoginToken mltFromPrevLogin) throws URISyntaxException {
 		this.ddpClient = new DdpClientWithEmail(meteorServerIp, meteorServerPort, notifyEmail, notifyEmailPw, clientName);
-//		this.clientName = clientName;
-//		this.emailUsername = emailUsername;
-//		this.emailPw = emailPw;
-//		this.meteorServerIp = meteorServerIp;
-//		this.meteorServerPort = meteorServerPort;
 		this.classOFM = classOFM;
 		
 		start();
@@ -256,7 +251,7 @@ public class MeteorListSendReceive<M> {
 		
 	}
 
-
+	
 	
 	private void start(){
 		this.ddpClient.connect();
@@ -348,12 +343,15 @@ public class MeteorListSendReceive<M> {
 	 *
 	 */
 	private class ReceivedDataObserver extends MeteorObserver<List<M>> {
+		private ReceivedDataObserver(){
+			super();
+		}
+		
 		@Override
 		List<M> convert(Observable client, JSONObject result) {
 			return getListFromDdpMsg(result);
 		}
 	}
-
 
 	
 	public List<M> getList(
@@ -525,7 +523,12 @@ public class MeteorListSendReceive<M> {
 		
 	}
 	
-	public <T> SubscriptionHandler subscribeToListData(){
+	/**
+	 * subscribeToListData when you are going to wait on CountDownLatch to
+	 *   get updates from meteor
+	 * @return
+	 */
+	public SubscriptionHandler subscribeToListData(){
 		checkLogin();
 		BlockingQueue<SubscriptionMessage> subMsgQueue = new ArrayBlockingQueue<SubscriptionMessage>(1000);
 		
@@ -539,18 +542,45 @@ public class MeteorListSendReceive<M> {
 		return ret;
 		
 	}
+	
+	public void subscribeToListDataWithCallback(MeteorListCallback<M> callback){
+		checkLogin();
+		BlockingQueue<SubscriptionMessage> subMsgQueue = new ArrayBlockingQueue<SubscriptionMessage>(1000);
+		
+		SubscriptionHandlerObserver posObserver = new SubscriptionHandlerObserver(subMsgQueue);
+		ddpClient.addObserver(posObserver);
+		SubscriptionHandler ret = new SubscriptionHandler(subMsgQueue,callback);
+		new Thread(ret).start();
+		String className = classOFM.getName();
+		Object[] params = {className};
+		ddpClient.subscribe(className, params);
+	}
 
+	/**
+	 * subscribeToListData when you are going to execute a callback
+	 *   function on every list change (add, update, delete) from meteor.
+	 *   
+	 * @param callback
+	 */
+	public void subscribeToListData(MeteorListCallback<M> callback){
+		
+	}
+	
 	
 	public class SubscriptionHandler extends AbstractSubscriptionHandler {
 		private final Object subScriptListLock = new Object();
 		private final List<M> subScriptionList = new ArrayList<M>();
-		private final CountDownLatch cdl = new CountDownLatch(1);
+		private final MeteorListCallback<M> callback;
+		
 		public SubscriptionHandler(BlockingQueue<SubscriptionMessage> subQueue) {
 			super(subQueue);
+			this.callback=null;
 		}
 		
-		public CountDownLatch getCdl(){
-			return this.cdl;
+		public SubscriptionHandler(BlockingQueue<SubscriptionMessage> subQueue,
+				MeteorListCallback<M> callback) {
+			super(subQueue);
+			this.callback=callback;
 		}
 		
 		// TODO should we check if it is the proper collection or assume we are only getting subscription updates regarding positions
@@ -558,14 +588,17 @@ public class MeteorListSendReceive<M> {
 		@Override
 		public void added(SubscriptionMessage subMsg) {
 			
-//			String id = subMsg.getId();
 			Utils.prt("from added: "+subMsg);
 			M m = getObject(subMsg.getFields().toString());
 			if(m!=null){
 				synchronized (subScriptListLock) {
-					subScriptionList.add(m);
+					if(callback==null){
+						subScriptionList.add(m);
+					}else{
+						String id = subMsg.getId();
+						callback.onMessage("added",id, m);
+					}
 				}
-				cdl.countDown();
 			}
 			
 		}
@@ -579,16 +612,22 @@ public class MeteorListSendReceive<M> {
 		@Override
 		public void changed(SubscriptionMessage subMsg) {
 
-//			String id = subMsg.getId();
 			Utils.prt("from changed: "+subMsg);
-
+			if(callback!=null){
+				String id = subMsg.getId();
+				M m = getObject(subMsg.getFields().toString());
+				callback.onMessage("changed",id, m);
+			}
 
 		}
 
 		@Override
 		public void removed(SubscriptionMessage subMsg) {
-			// do nothing on purpose
-			
+			Utils.prt("from removed: "+subMsg);
+			if(callback!=null){
+				String id = subMsg.getId();
+				callback.onMessage("removed",id,null);
+			}
 		}
 
 	}

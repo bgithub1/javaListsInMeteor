@@ -2,8 +2,12 @@ package misc;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.billybyte.meteorjava.MeteorValidator;
 import com.billybyte.meteorjava.runs.SimpleSendRecPosClDetailed;
 import com.billybyte.meteorjava.staticmethods.Utils;
 
@@ -82,6 +86,24 @@ public class PosClDetailed extends PositionClass {
 		return getProd() + ", " + getType() + ", " + getExch() + ", "
 				+ getCurr() + ", " + getYear() + ", " + getMonth() + ", "
 				+ getPc() + ", " + getStrike() + ", " + super.toString();
+	}
+	
+	
+	@SuppressWarnings("rawtypes")
+	public static MeteorValidator buildValidator(){
+		Map jnestMap = new HashMap();
+		List<String> dependentFieldOrderList  = new ArrayList<String>();
+		Map<String, List<String>> independentFields = new HashMap<String, List<String>>();
+		List<String> freeFields = Arrays.asList(new String[]{
+				"account","strategy",
+				"price","qty","prod","type","exch","curr","year",
+				"month"
+		});
+		
+		MeteorValidator ret = 
+				new MeteorValidator(PosClDetailed.class, jnestMap, dependentFieldOrderList, independentFields, freeFields);
+		
+		return ret;
 	}
 
 	public static void main(String[] args) {
