@@ -543,27 +543,28 @@ public class MeteorListSendReceive<M> {
 		
 	}
 	
+	/**
+	 * subscribeToListDataWithCallback when you are going to execute a callback
+	 *   function on every list change (add, update, delete) from meteor.
+	 * @param callback
+	 */
 	public void subscribeToListDataWithCallback(MeteorListCallback<M> callback){
 		checkLogin();
 		BlockingQueue<SubscriptionMessage> subMsgQueue = new ArrayBlockingQueue<SubscriptionMessage>(1000);
-		
-		SubscriptionHandlerObserver posObserver = new SubscriptionHandlerObserver(subMsgQueue);
-		ddpClient.addObserver(posObserver);
+		// SubscriptionHandlerObserver uses a blocking queue to get messages from ddpclient
+		SubscriptionHandlerObserver observer = new SubscriptionHandlerObserver(subMsgQueue);
+		// add observer as an observer to ddpClient
+		ddpClient.addObserver(observer);
+		// the SubscriptionHandler will take blockingqueue messages from ddpClient and
+		//   call the callback routine
 		SubscriptionHandler ret = new SubscriptionHandler(subMsgQueue,callback);
+		// all of this is done on another thread
 		new Thread(ret).start();
 		String className = classOFM.getName();
 		Object[] params = {className};
+		/// now subscribe to changes in the Meteor collection that has the
+		//  the same name as the class.
 		ddpClient.subscribe(className, params);
-	}
-
-	/**
-	 * subscribeToListData when you are going to execute a callback
-	 *   function on every list change (add, update, delete) from meteor.
-	 *   
-	 * @param callback
-	 */
-	public void subscribeToListData(MeteorListCallback<M> callback){
-		
 	}
 	
 	

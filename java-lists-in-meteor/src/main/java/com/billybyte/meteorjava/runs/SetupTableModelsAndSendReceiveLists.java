@@ -47,6 +47,7 @@ public class SetupTableModelsAndSendReceiveLists {
 	boolean doReadHowToData = false;
 	boolean doPosSubscription = false;
 	boolean doPosSubscriptionWithCallback = false;
+	boolean doTableChangedByUserSubscriptionWithCallback = false;
 	MeteorListSendReceive<?> example;
 
 	public static void main(String[] args) {
@@ -114,6 +115,9 @@ public class SetupTableModelsAndSendReceiveLists {
 		if(argPairs.containsKey("doPosSubscriptionWithCallback")){
 			btms.doPosSubscriptionWithCallback = new Boolean(argPairs.get("doPosSubscriptionWithCallback"));
 		}
+		if(argPairs.containsKey("doTableChangedByUserSubscriptionWithCallback")){
+			btms.doTableChangedByUserSubscriptionWithCallback = new Boolean(argPairs.get("doTableChangedByUserSubscriptionWithCallback"));
+		}
 		
 		// create a ddp connection that can be re-used
 		try {
@@ -127,10 +131,6 @@ public class SetupTableModelsAndSendReceiveLists {
 			throw Utils.IllState(e);
 		}
 
-		// subscribe to table changes by client
-		ProcessTableChangedByUser ptcb = 
-				btms.new ProcessTableChangedByUser();
-		new Thread(ptcb).run();
 		
 		// run all of the examples.  Each example will check to see 
 		//  if its respective boolean is true.  If not, it won't run.
@@ -145,7 +145,8 @@ public class SetupTableModelsAndSendReceiveLists {
 		btms.readHowToData();
 		btms.posSubscription();
 		btms.posSubscriptionWithCallback();
-		if(!btms.doPosSubscriptionWithCallback){
+		btms.tableChangedByUserSubscriptionWithCallback();
+		if(!btms.doPosSubscriptionWithCallback && !btms.doTableChangedByUserSubscriptionWithCallback){
 			System.exit(0);
 		}
 	}
@@ -383,7 +384,68 @@ public class SetupTableModelsAndSendReceiveLists {
 		if(example==null)mlsr.disconnect();
 	}
 			
+	/**
+	 * Subscribe to notifications that a Meteor client has changed a table.  If it has, a TableChangedByUser "added" message
+	 *   will be sent by the Meteor server, with an _id of userId_collectionName.
+	 *   Split the 	userId_collectionName _id, and fetch all of the records for that user of that collection.
+	 *   
+	 */
+	public void tableChangedByUserSubscriptionWithCallback(){
+		if(!doTableChangedByUserSubscriptionWithCallback)return;
+		MeteorListSendReceive<TableChangedByUser> mlsr = null;
+		try {
+			mlsr = example!=null  ? 
+					new MeteorListSendReceive<TableChangedByUser>(example,TableChangedByUser.class) :
+					new MeteorListSendReceive<TableChangedByUser>(100, 
+							TableChangedByUser.class, meteorUrl, meteorPort, 
+							adminEmail,adminPass,"", "", "tester");
 			
+		} catch (URISyntaxException e) {
+			throw Utils.IllState(e);
+		}
+		final MeteorListSendReceive mlsrAsExample = mlsr;
+		MeteorListCallback<TableChangedByUser> tableChangedByUserCallback = 
+				new MeteorListCallback<TableChangedByUser>() {
+					@Override
+					public void onMessage(String messageType, String id,TableChangedByUser convertedMessage) {
+						Utils.prtObMess(this.getClass(), "TableChangedByUser callback: "+messageType);
+						Utils.prtObMess(this.getClass(), "recId: "+id+", record: " + (convertedMessage!=null ? convertedMessage.toString(): "null message"));
+						if(messageType.compareTo("added")==0){
+							String[] userIdAndCollection = id.split("_");
+							String userId = userIdAndCollection[0];
+							String collection = userIdAndCollection[1];
+							Class<?> clazz=null;
+							if(collection==null)return;
+							try {
+								clazz = Class.forName(collection);
+							} catch (ClassNotFoundException e) {
+								if(collection.compareTo("undefined")!=0){
+									e.printStackTrace();
+									return;
+								}else{
+									return;
+								}
+							}
+							// add logic to get collection that has been changed
+							
+							MeteorListSendReceive<?> mlsrForCollectionRead = 
+									new MeteorListSendReceive(mlsrAsExample,clazz);
+							Map<String, String> selector = new HashMap<String, String>();
+							selector.put("userId", userId);
+							List<?> dataFromCollection = 
+									mlsrForCollectionRead.getList(selector);
+							for(Object o : dataFromCollection){
+								Utils.prt(o.toString());
+							}
+						}
+					}
+		};
+		
+		Utils.prtObMess(this.getClass(),"About to subscribe to TableChangedByUser add, updates and removes, which happens after adds and deletes by a Meteor client");
+		mlsr.subscribeToListDataWithCallback(tableChangedByUserCallback);
+		Utils.prtObMess(this.getClass(), "kill this process once you are done observing add, update and remove callbacks from Meteor");
+	}
+
 	public void posSubscriptionWithCallback(){
 		if(!doPosSubscriptionWithCallback)return;
 		MeteorListSendReceive<PosClDetailed> mlsr = null;
@@ -409,7 +471,6 @@ public class SetupTableModelsAndSendReceiveLists {
 		mlsr.subscribeToListDataWithCallback(posClDetailedCallback);
 		Utils.prtObMess(this.getClass(), "kill this process once you are done observing add, update and remove callbacks from Meteor");
 	}
-
 	
 	private void readHowToData(){
 		readData(doReadHowToData, HowTos.class);
@@ -466,27 +527,5 @@ public class SetupTableModelsAndSendReceiveLists {
 		
 	}
 
-	private  class ProcessTableChangedByUser implements Runnable{
-
-		@Override
-		public void run() {
-			BlockingQueue<Map<String, TableChangedByUser>> blockingQueue = 
-					new ArrayBlockingQueue<Map<String,TableChangedByUser>>(10);
-			TableChangedByUser.subscribeToChanges(meteorUrl, meteorPort, adminEmail, adminPass, blockingQueue);
-			boolean keepGoing=true;
-			while(keepGoing){
-				try {
-					Map<String, TableChangedByUser> singleEntryMap = 
-							blockingQueue.take();
-					for(Entry<String, TableChangedByUser> entry : singleEntryMap.entrySet()){
-						Utils.prt(entry.getKey()+","+ (entry.getValue()!=null ? entry.getValue() : "null"));
-					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		
-	}
 }
 
