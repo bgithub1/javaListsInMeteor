@@ -2,11 +2,14 @@ package com.billybyte.meteorjava;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -68,13 +71,8 @@ public class MeteorListSendReceive<M> {
 	private final Class<M> classOFM;
 	private final int millsToWaitForConnect = 300;
 	private final int triesToConnect = 3;
-//	private final String clientName;
-//	private final String meteorServerIp;
-//	private final int meteorServerPort;
 	private final AtomicReference<MeteorLoginToken> loginToken = new AtomicReference<MeteorLoginToken>(); 
-//	private final String emailUsername;
-//	private final String emailPw;
-	
+	private static final int DEFAULT_BLOCKINGQUEUE_CAPACITY = 100;
 	
 	private static final String regexExpressionToEliminateLeadingZeros = 
 			"=[0]{1,}[0-9]{1,}[\\.]{0,1}[0-9]{0,},";
@@ -678,7 +676,68 @@ public class MeteorListSendReceive<M> {
 		}
 	}
 	
-	
+	public  BlockingQueue<List<?>> subscribeToTableChangedByUser(
+			int blockingQueueCapacity,
+			Set<String> collectionNamesToWatchFor){
+		int cap = blockingQueueCapacity;
+		if(cap<1){
+			 cap = DEFAULT_BLOCKINGQUEUE_CAPACITY;
+		}
+		final Set<String> collectionNameSet = collectionNamesToWatchFor==null ? null : new HashSet<String>(collectionNamesToWatchFor);
+		final BlockingQueue<List<?>> ret = new ArrayBlockingQueue<List<?>>(cap);
+		final MeteorListSendReceive<?> finalMlsrToGetPosition = this;
+		final MeteorListSendReceive<TableChangedByUser> tableChangedMlsrForSubscribe = new MeteorListSendReceive<TableChangedByUser>(this, TableChangedByUser.class);
+		MeteorListCallback<TableChangedByUser> tableChangedByUserCallback = 
+				new MeteorListCallback<TableChangedByUser>() {
+					@SuppressWarnings({ "unchecked", "rawtypes" })
+					@Override
+					public void onMessage(String messageType, String id,TableChangedByUser convertedMessage) {
+						Utils.prtObMess(this.getClass(), "TableChangedByUser callback: "+messageType);
+						Utils.prtObMess(this.getClass(), "recId: "+id+", record: " + (convertedMessage!=null ? convertedMessage.toString(): "null message"));
+						if(messageType.compareTo("added")==0){
+							String[] userIdAndCollection = id.split("_");
+							String userId = userIdAndCollection[0];
+							String collection = userIdAndCollection[1];
+							Class<?> clazz=null;
+							if(collection==null)return;
+							if(collectionNameSet!=null && !collectionNameSet.contains(collection)){
+								return;
+							}
+							try {
+								clazz = Class.forName(collection);
+							} catch (ClassNotFoundException e) {
+								if(collection.compareTo("undefined")!=0){
+									e.printStackTrace();
+									return;
+								}else{
+									return;
+								}
+							}
+							// add logic to get collection that has been changed
+							
+							MeteorListSendReceive<?> mlsrForCollectionRead = 
+									new MeteorListSendReceive(finalMlsrToGetPosition,clazz);
+							Map<String, String> selector = new HashMap<String, String>();
+							selector.put("userId", userId);
+							List<?> dataFromCollection = 
+									mlsrForCollectionRead.getList(selector);
+							boolean okOffer = ret.offer(dataFromCollection);
+							if(!okOffer){
+								throw Utils.IllState(this.getClass(), "overflow on offer to blocking queue while receiving TableChangedByUser messages from Meteor ");
+							}
+//							for(Object o : dataFromCollection){
+//								Utils.prt(o.toString());
+//							}
+						}
+					}
+		};
+		
+		Utils.prtObMess(this.getClass(),"About to subscribe to TableChangedByUser add, updates and removes, which happens after adds and deletes by a Meteor client");
+		tableChangedMlsrForSubscribe.subscribeToListDataWithCallback(tableChangedByUserCallback);
+		Utils.prtObMess(this.getClass(), "kill this process once you are done observing add, update and remove callbacks from Meteor");
+		return ret;
+	}
+
 	
 	public String[] removeListItems(List<String> listOfIdsToRemove){
 		checkLogin();

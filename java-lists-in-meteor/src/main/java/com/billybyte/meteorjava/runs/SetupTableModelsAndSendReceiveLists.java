@@ -403,47 +403,73 @@ public class SetupTableModelsAndSendReceiveLists {
 		} catch (URISyntaxException e) {
 			throw Utils.IllState(e);
 		}
-		final MeteorListSendReceive mlsrAsExample = mlsr;
-		MeteorListCallback<TableChangedByUser> tableChangedByUserCallback = 
-				new MeteorListCallback<TableChangedByUser>() {
-					@Override
-					public void onMessage(String messageType, String id,TableChangedByUser convertedMessage) {
-						Utils.prtObMess(this.getClass(), "TableChangedByUser callback: "+messageType);
-						Utils.prtObMess(this.getClass(), "recId: "+id+", record: " + (convertedMessage!=null ? convertedMessage.toString(): "null message"));
-						if(messageType.compareTo("added")==0){
-							String[] userIdAndCollection = id.split("_");
-							String userId = userIdAndCollection[0];
-							String collection = userIdAndCollection[1];
-							Class<?> clazz=null;
-							if(collection==null)return;
-							try {
-								clazz = Class.forName(collection);
-							} catch (ClassNotFoundException e) {
-								if(collection.compareTo("undefined")!=0){
-									e.printStackTrace();
-									return;
-								}else{
-									return;
-								}
-							}
-							// add logic to get collection that has been changed
-							
-							MeteorListSendReceive<?> mlsrForCollectionRead = 
-									new MeteorListSendReceive(mlsrAsExample,clazz);
-							Map<String, String> selector = new HashMap<String, String>();
-							selector.put("userId", userId);
-							List<?> dataFromCollection = 
-									mlsrForCollectionRead.getList(selector);
-							for(Object o : dataFromCollection){
-								Utils.prt(o.toString());
-							}
+		
+		final BlockingQueue<List<?>> blockingQueue = 
+				mlsr.subscribeToTableChangedByUser(-1,null);
+		Runnable r = new Runnable() {
+			
+			@Override
+			public void run() {
+				boolean keepGoing = true;
+				while(keepGoing){
+					try {
+						List<?> dataFromCollection = blockingQueue.take();
+						for(Object o : dataFromCollection){
+							Utils.prt(o.toString());
 						}
+					} catch (InterruptedException e) {						
+						e.printStackTrace();
+						keepGoing=false;
 					}
+				}
+				
+			}
 		};
 		
-		Utils.prtObMess(this.getClass(),"About to subscribe to TableChangedByUser add, updates and removes, which happens after adds and deletes by a Meteor client");
-		mlsr.subscribeToListDataWithCallback(tableChangedByUserCallback);
-		Utils.prtObMess(this.getClass(), "kill this process once you are done observing add, update and remove callbacks from Meteor");
+		// startup the blockingqueue taker
+		new Thread(r).run();
+
+//		final MeteorListSendReceive mlsrAsExample = mlsr;
+//		MeteorListCallback<TableChangedByUser> tableChangedByUserCallback = 
+//				new MeteorListCallback<TableChangedByUser>() {
+//					@Override
+//					public void onMessage(String messageType, String id,TableChangedByUser convertedMessage) {
+//						Utils.prtObMess(this.getClass(), "TableChangedByUser callback: "+messageType);
+//						Utils.prtObMess(this.getClass(), "recId: "+id+", record: " + (convertedMessage!=null ? convertedMessage.toString(): "null message"));
+//						if(messageType.compareTo("added")==0){
+//							String[] userIdAndCollection = id.split("_");
+//							String userId = userIdAndCollection[0];
+//							String collection = userIdAndCollection[1];
+//							Class<?> clazz=null;
+//							if(collection==null)return;
+//							try {
+//								clazz = Class.forName(collection);
+//							} catch (ClassNotFoundException e) {
+//								if(collection.compareTo("undefined")!=0){
+//									e.printStackTrace();
+//									return;
+//								}else{
+//									return;
+//								}
+//							}
+//							// add logic to get collection that has been changed
+//							
+//							MeteorListSendReceive<?> mlsrForCollectionRead = 
+//									new MeteorListSendReceive(mlsrAsExample,clazz);
+//							Map<String, String> selector = new HashMap<String, String>();
+//							selector.put("userId", userId);
+//							List<?> dataFromCollection = 
+//									mlsrForCollectionRead.getList(selector);
+//							for(Object o : dataFromCollection){
+//								Utils.prt(o.toString());
+//							}
+//						}
+//					}
+//		};
+//		
+//		Utils.prtObMess(this.getClass(),"About to subscribe to TableChangedByUser add, updates and removes, which happens after adds and deletes by a Meteor client");
+//		mlsr.subscribeToListDataWithCallback(tableChangedByUserCallback);
+//		Utils.prtObMess(this.getClass(), "kill this process once you are done observing add, update and remove callbacks from Meteor");
 	}
 
 	public void posSubscriptionWithCallback(){
