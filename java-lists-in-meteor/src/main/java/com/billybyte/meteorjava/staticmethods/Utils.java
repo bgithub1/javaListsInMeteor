@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -386,6 +387,11 @@ public class Utils {
 	}		
 	
 
+	public static void writeToXml(Object o, String filePath) throws IOException{
+		XStream xs = new XStream();
+		FileWriter fw = new FileWriter(new File(filePath));
+		xs.toXML(o, fw);
+	}
 	
 
 }

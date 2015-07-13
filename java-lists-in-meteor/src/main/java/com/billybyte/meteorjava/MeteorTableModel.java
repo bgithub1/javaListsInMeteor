@@ -1,5 +1,6 @@
 package com.billybyte.meteorjava;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +86,16 @@ public class MeteorTableModel {
 		} catch (InterruptedException e) {
 			throw Utils.IllState(e);
 		}
+	}
+	
+	public <M> void toXml(Class<M> classOfM,String xmlPath) throws IOException{
+		String path = xmlPath==null ? classOfM.getSimpleName()+"TableModel.xml" : xmlPath;
+		Utils.writeToXml(this,path);
+	}
+	
+	public static <M> MeteorTableModel fromXml(Class<M> classOfM,String xmlPath){
+		String path = xmlPath==null ? classOfM.getSimpleName()+"TableModel.xml" : xmlPath;
+		return Utils.getFromXml(MeteorTableModel.class, null, path);
 	}
 	
 }

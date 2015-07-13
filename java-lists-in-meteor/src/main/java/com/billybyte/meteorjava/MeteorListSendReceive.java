@@ -641,7 +641,8 @@ public class MeteorListSendReceive<M> {
 	private class DeleteTableModelObserver extends MeteorObserver<String>{
 		@Override
 		String convert(Observable client, JSONObject result) {
-			String s = result.getString("result");
+			
+			String s = result.get("result").toString();
 			return s;
 		}
 		
@@ -687,6 +688,12 @@ public class MeteorListSendReceive<M> {
 		final BlockingQueue<List<?>> ret = new ArrayBlockingQueue<List<?>>(cap);
 		final MeteorListSendReceive<?> finalMlsrToGetPosition = this;
 		final MeteorListSendReceive<TableChangedByUser> tableChangedMlsrForSubscribe = new MeteorListSendReceive<TableChangedByUser>(this, TableChangedByUser.class);
+		
+		// Create an anonymous MeteorListCallback<TableChangedByUser> instance that will
+		// respond to TableChangedByUser records from Meteor, then fetch List<?> from
+		// Meteor for the collection that was changed - BUT ONLY FOR THE SPECIFIC USERID !!!.
+		// 	These List<?> items get offered on to the BlockingQueue<List<?>> that was
+		//  originally returned to the caller of subscribeToTableChangedByUser.
 		MeteorListCallback<TableChangedByUser> tableChangedByUserCallback = 
 				new MeteorListCallback<TableChangedByUser>() {
 					@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -713,21 +720,23 @@ public class MeteorListSendReceive<M> {
 									return;
 								}
 							}
-							// add logic to get collection that has been changed
 							
+							// Now get the List<?> of records of type clazz from Meteor that
+							//  has been changed by a Meteor client.
 							MeteorListSendReceive<?> mlsrForCollectionRead = 
 									new MeteorListSendReceive(finalMlsrToGetPosition,clazz);
 							Map<String, String> selector = new HashMap<String, String>();
 							selector.put("userId", userId);
+							// Do the get here.
 							List<?> dataFromCollection = 
 									mlsrForCollectionRead.getList(selector);
+							// Put the list on the blocking queue that we originally sent back to
+							//  the caller of subscribeToTableChangedByUser when we first started above (outside of this runnable).
+							//  The caller should be waiting on this blockingqueue (take) for these List<?> items.
 							boolean okOffer = ret.offer(dataFromCollection);
 							if(!okOffer){
 								throw Utils.IllState(this.getClass(), "overflow on offer to blocking queue while receiving TableChangedByUser messages from Meteor ");
 							}
-//							for(Object o : dataFromCollection){
-//								Utils.prt(o.toString());
-//							}
 						}
 					}
 		};
