@@ -11,6 +11,11 @@
   <version>0.0.1-SNAPSHOT</version>
   <description>read, write and subscribe java.util.list between a Meteor sever and a java ddp client</description>
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/java</directory>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
