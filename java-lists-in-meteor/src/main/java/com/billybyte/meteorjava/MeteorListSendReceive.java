@@ -677,6 +677,59 @@ public class MeteorListSendReceive<M> {
 		}
 	}
 	
+//	public BlockingQueue<TableChangedByUser> alertTableChangedByUser(
+//			int blockingQueueCapacity,
+//			Set<String> collectionNamesToWatchFor){
+//		int cap = blockingQueueCapacity;
+//		if(cap<1){
+//			 cap = DEFAULT_BLOCKINGQUEUE_CAPACITY;
+//		}
+//		final Set<String> collectionNameSet = collectionNamesToWatchFor==null ? null : new HashSet<String>(collectionNamesToWatchFor);
+//		final BlockingQueue<TableChangedByUser> ret = new ArrayBlockingQueue<TableChangedByUser>(cap);
+//		final MeteorListSendReceive<TableChangedByUser> tableChangedMlsrForSubscribe = new MeteorListSendReceive<TableChangedByUser>(this, TableChangedByUser.class);
+//		
+//		MeteorListCallback<TableChangedByUser> tableChangedByUserCallback = 
+//				new MeteorListCallback<TableChangedByUser>() {
+//					@SuppressWarnings({ "unchecked", "rawtypes" })
+//					@Override
+//					public void onMessage(String messageType, String id,TableChangedByUser convertedMessage) {
+//						Utils.prtObMess(this.getClass(), "AlertTableChangedByUser callback: "+messageType);
+//						Utils.prtObMess(this.getClass(), "recId: "+id+", record: " + (convertedMessage!=null ? convertedMessage.toString(): "null message"));
+//						if(messageType.compareTo("added")==0){
+//							String[] userIdAndCollection = id.split("_");
+//							String userId = userIdAndCollection[0];
+//							String collection = userIdAndCollection[1];
+//							if(collection==null)return;
+//							if(collectionNameSet!=null && !collectionNameSet.contains(collection)){
+//								return;
+//							}
+//							
+//							// Put the list on the blocking queue that we originally sent back to
+//							//  the caller of subscribeToTableChangedByUser when we first started above (outside of this runnable).
+//							//  The caller should be waiting on this blockingqueue (take) for these List<?> items.
+//							boolean okOffer = ret.offer(convertedMessage);
+//							if(!okOffer){
+//								throw Utils.IllState(this.getClass(), "overflow on offer to blocking queue while receiving TableChangedByUser messages from Meteor ");
+//							}
+//						}
+//					}
+//		};
+//		Utils.prtObMess(this.getClass(),"About to subscribe to alerts that TableChangedByUser add, updates and removes, which happens after adds and deletes by a Meteor client");
+//		tableChangedMlsrForSubscribe.subscribeToListDataWithCallback(tableChangedByUserCallback);
+//		Utils.prtObMess(this.getClass(), "kill this process once you are done observing add, update and remove callbacks from Meteor");
+//		return ret;
+//	}
+
+	
+	/**
+	 * Subscribe to changes in TableChangedByUser, which gets called whenever any table gets changed for any userId
+	 *   When one of the tables that you are watching (in the list collectionNamesToWatchFor), get 
+	 *   records of the type classOfRecsToGet.
+	 * @param blockingQueueCapacity
+	 * @param collectionNamesToWatchFor
+	 * @param classOfRecsToGet
+	 * @return
+	 */
 	public  BlockingQueue<List<?>> subscribeToTableChangedByUser(
 			int blockingQueueCapacity,
 			Set<String> collectionNamesToWatchFor){
@@ -705,11 +758,12 @@ public class MeteorListSendReceive<M> {
 							String[] userIdAndCollection = id.split("_");
 							String userId = userIdAndCollection[0];
 							String collection = userIdAndCollection[1];
-							Class<?> clazz=null;
 							if(collection==null)return;
 							if(collectionNameSet!=null && !collectionNameSet.contains(collection)){
 								return;
 							}
+							
+							Class<?> clazz=null;
 							try {
 								clazz = Class.forName(collection);
 							} catch (ClassNotFoundException e) {
@@ -720,7 +774,7 @@ public class MeteorListSendReceive<M> {
 									return;
 								}
 							}
-							
+
 							// Now get the List<?> of records of type clazz from Meteor that
 							//  has been changed by a Meteor client.
 							MeteorListSendReceive<?> mlsrForCollectionRead = 
