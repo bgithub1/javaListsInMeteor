@@ -16,6 +16,7 @@ public class TestResponse {
 		
 		String meteorIp = args[0];
 		Integer meteorPort = Integer.parseInt(args[1]);
+		String meteorLoginEmail=args[2];
 		
 		try {
 			
@@ -45,13 +46,13 @@ public class TestResponse {
 			
 			Thread.sleep(1500);
 			
-			Object[] callParams = new String[]{"peter.kutrumbos@gmail.com"};
+			Object[] callParams = new String[]{meteorLoginEmail};
 			
 			ddpClient.call("get_position", callParams);
 			
 			Thread.sleep(2000);
 			
-			Object[] subParams = new String[]{"peter.kutrumbos@gmail.com"};
+			Object[] subParams = new String[]{meteorLoginEmail};
 			
 			ddpClient.subscribe("positions", subParams);
 
