@@ -333,6 +333,12 @@ public class MeteorListSendReceive<M> {
 		return callMeteorSynchronously(meteorMethod, params, observer);
 	}
 	
+	public List<MeteorTableModel> getAllMeteorTableModels(){
+		checkLogin();
+		MeteorListSendReceive<MeteorTableModel> mlsrTm = 
+				new MeteorListSendReceive<MeteorTableModel>(this,MeteorTableModel.class);
+		return mlsrTm.getList(new HashMap<String, String>());
+	}
 
 	/**
 	 * Obsever that handles list data that comes back from Meteor after you
