@@ -39,6 +39,7 @@ public class SetupTableModelsAndSendReceiveLists {
 	boolean doRemoveTradeItems = false;
 	boolean doRemovePosItems = false;
 	boolean doTableModelsCreate= false;
+	boolean doDeleteAllTableModels = false;
 	boolean doSendTradeData = false;
 	boolean doSendPosData = false;
 	boolean doSendHowToData = false;
@@ -91,6 +92,9 @@ public class SetupTableModelsAndSendReceiveLists {
 		if(argPairs.containsKey("doTableModelsCreate")){
 			btms.doTableModelsCreate = new Boolean(argPairs.get("doTableModelsCreate"));
 		}
+		if(argPairs.containsKey("doDeleteAllTableModels")){
+			btms.doDeleteAllTableModels = new Boolean(argPairs.get("doDeleteAllTableModels"));
+		}
 		if(argPairs.containsKey("doSendTradeData")){
 			btms.doSendTradeData = new Boolean(argPairs.get("doSendTradeData"));
 		}
@@ -136,6 +140,7 @@ public class SetupTableModelsAndSendReceiveLists {
 		//  if its respective boolean is true.  If not, it won't run.
 		btms.removeTradeItems();
 		btms.removePosItems();
+		btms.deleteAllTableModels();
 		btms.tableModelsCreate();
 		btms.sendTradeData();
 		btms.sendPosData();
@@ -270,7 +275,22 @@ public class SetupTableModelsAndSendReceiveLists {
 		}
 	}
 
-	
+	private void deleteAllTableModels(){
+		if(!doDeleteAllTableModels) return;
+		@SuppressWarnings("unchecked")
+		List<MeteorTableModel> mtmList = Utils.getFromXml(List.class, this.getClass(), "positionMeteorTableModels.xml");
+		try{
+			MeteorListSendReceive<MeteorTableModel> mlsr = example!=null  ? 
+					new MeteorListSendReceive<MeteorTableModel>(example,MeteorTableModel.class) :
+					new MeteorListSendReceive<MeteorTableModel>(100, 
+							MeteorTableModel.class, meteorUrl, meteorPort, 
+							adminEmail,adminPass,"", "", "tester");
+			// remove old tables
+			mlsr.deleteAllTableModels();
+		}catch(Exception e){
+			throw Utils.IllState(e);
+		}
+	}
 	
 	private void tableModelsCreate(){
 		if(!doTableModelsCreate)return;

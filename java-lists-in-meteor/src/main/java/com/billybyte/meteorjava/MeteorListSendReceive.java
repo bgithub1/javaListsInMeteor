@@ -662,6 +662,14 @@ public class MeteorListSendReceive<M> {
 		return ret;
 	}
 	
+	public String deleteAllTableModels(){
+		Object[] params = {};
+		DeleteTableModelObserver observer = new DeleteTableModelObserver();
+		callMeteorSynchronously("removeAllMasterTables", params, observer);
+		String ret = observer.getReceivedResult();
+		return ret;
+	}
+	
 	public void disconnect(){
 		checkLogin();
 		ddpClient.disconnect();
