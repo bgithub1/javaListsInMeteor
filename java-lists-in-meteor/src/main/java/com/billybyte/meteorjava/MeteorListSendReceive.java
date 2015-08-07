@@ -14,6 +14,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import me.kutrumbos.AbstractSubscriptionHandler;
@@ -25,6 +27,15 @@ import org.java_websocket.WebSocket.READYSTATE;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+
+
+
+
+
+
+
+
 
 
 
@@ -237,7 +248,10 @@ public class MeteorListSendReceive<M> {
 	private <T> T callMeteorSynchronously(String methodName,Object[] params,MeteorObserver<T> observer){
 		checkLogin();
 		ddpClient.addObserver(observer);
-		ddpClient.call(methodName, params);
+		String result = ddpClient.call(methodName, params);
+		if(result==null){
+			return null;
+		}
 		try {
 			observer.getCdl().await(timeoutValue,TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
@@ -357,6 +371,84 @@ public class MeteorListSendReceive<M> {
 		}
 	}
 
+	private Integer getHeartbeat(){
+		ReceiveHeartbeatObserver observer = new  ReceiveHeartbeatObserver();
+		Object[] params = null;
+		return callMeteorSynchronously("heartbeat", params, observer);
+	}
+	
+	private class HeartbeatRunnable implements Runnable{
+		private final BlockingQueue<String> lostHeartbeatNotifyBlockingQueue;
+		private final AtomicBoolean keepRunning = new AtomicBoolean(true);
+		private final long waitTimeInSeconds;
+		
+		private HeartbeatRunnable(
+				BlockingQueue<String> lostHeartbeatNotifyBlockingQueue,
+				long waitTimeInSeconds) {
+			super();
+			this.lostHeartbeatNotifyBlockingQueue = lostHeartbeatNotifyBlockingQueue;
+			this.waitTimeInSeconds = waitTimeInSeconds;
+		}
+		
+		
+		@Override
+		public void run() {
+			while(keepRunning.get()){
+				try {
+					Integer zeroIfGood = getHeartbeat();
+					if(zeroIfGood==null){
+						this.lostHeartbeatNotifyBlockingQueue.offer("Lost Heartbeat");
+						break;
+					}
+					Thread.sleep(waitTimeInSeconds*1000);
+				} catch (InterruptedException e) {
+					break;
+				}
+			}
+			
+		}
+		
+	}
+	
+	/**
+	 * start up observation of a heartbeat from meteor and call the callback when
+	 *   you lose the connection to meteor
+	 * 
+	 * @param lostHeartbeatCallback
+	 * @param secondsToWait
+	 */
+	public void heartBeatAlertStart(
+			final MeteorListCallback<String> lostHeartbeatCallback,final long secondsToWait){
+		
+		final BlockingQueue<String> lostHeartbeatBq = 
+				new ArrayBlockingQueue<String>(100);
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				heartBeatAlertStart(lostHeartbeatBq, secondsToWait);
+				while(true){
+					try {
+						String lostTheHeartBeat = lostHeartbeatBq.take();
+						lostHeartbeatCallback.onMessage("Lost Heartbeat", "0", lostTheHeartBeat);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						lostHeartbeatCallback.onMessage("exception", "-1", e.toString());
+					} 
+					break;
+				}
+			}
+		}).run();
+	}
+	
+	/**
+	 * start up observation of a heartbeat from meteor and set a blocking queue when
+	 *   you lose the connection to meteor
+	 * @param blockingQueue
+	 */
+	public void heartBeatAlertStart(BlockingQueue<String> blockingQueue,long secondsToWait){
+		new Thread( new HeartbeatRunnable(blockingQueue, secondsToWait)).run();; // one minute wait time
+	}
 	
 	public List<M> getList(
 			Map<String, String> mongoSelectors){
@@ -526,6 +618,22 @@ public class MeteorListSendReceive<M> {
 		}
 		
 	}
+	
+	private class ReceiveHeartbeatObserver extends MeteorObserver<Integer>{
+		@Override
+		Integer convert(Observable client, JSONObject result) {
+			if(!result.has("result"))return null;
+			if(result.has("error")){
+				String error = result.getString("error");
+				if(error!=null){
+					throw Utils.IllState(this.getClass(),error);
+				}
+			}
+			return result.getInt("result");
+		}
+	}
+	
+	
 	
 	/**
 	 * subscribeToListData when you are going to wait on CountDownLatch to

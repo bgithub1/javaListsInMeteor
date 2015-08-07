@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 
 import misc.HowTos;
 import misc.PosClDetailed;
@@ -49,6 +50,7 @@ public class SetupTableModelsAndSendReceiveLists {
 	boolean doPosSubscription = false;
 	boolean doPosSubscriptionWithCallback = false;
 	boolean doTableChangedByUserSubscriptionWithCallback = false;
+	boolean doHeartbeatTest = false;
 	MeteorListSendReceive<?> example;
 
 	public static void main(String[] args) {
@@ -122,6 +124,9 @@ public class SetupTableModelsAndSendReceiveLists {
 		if(argPairs.containsKey("doTableChangedByUserSubscriptionWithCallback")){
 			btms.doTableChangedByUserSubscriptionWithCallback = new Boolean(argPairs.get("doTableChangedByUserSubscriptionWithCallback"));
 		}
+		if(argPairs.containsKey("doHeartbeatTest")){
+			btms.doHeartbeatTest = new Boolean(argPairs.get("doHeartbeatTest"));
+		}
 		
 		// create a ddp connection that can be re-used
 		try {
@@ -151,6 +156,7 @@ public class SetupTableModelsAndSendReceiveLists {
 		btms.posSubscription();
 		btms.posSubscriptionWithCallback();
 		btms.tableChangedByUserSubscriptionWithCallback();
+		btms.heartbeatTest();
 		if(!btms.doPosSubscriptionWithCallback && !btms.doTableChangedByUserSubscriptionWithCallback){
 			System.exit(0);
 		}
@@ -449,47 +455,6 @@ public class SetupTableModelsAndSendReceiveLists {
 		// startup the blockingqueue taker
 		new Thread(r).run();
 
-//		final MeteorListSendReceive mlsrAsExample = mlsr;
-//		MeteorListCallback<TableChangedByUser> tableChangedByUserCallback = 
-//				new MeteorListCallback<TableChangedByUser>() {
-//					@Override
-//					public void onMessage(String messageType, String id,TableChangedByUser convertedMessage) {
-//						Utils.prtObMess(this.getClass(), "TableChangedByUser callback: "+messageType);
-//						Utils.prtObMess(this.getClass(), "recId: "+id+", record: " + (convertedMessage!=null ? convertedMessage.toString(): "null message"));
-//						if(messageType.compareTo("added")==0){
-//							String[] userIdAndCollection = id.split("_");
-//							String userId = userIdAndCollection[0];
-//							String collection = userIdAndCollection[1];
-//							Class<?> clazz=null;
-//							if(collection==null)return;
-//							try {
-//								clazz = Class.forName(collection);
-//							} catch (ClassNotFoundException e) {
-//								if(collection.compareTo("undefined")!=0){
-//									e.printStackTrace();
-//									return;
-//								}else{
-//									return;
-//								}
-//							}
-//							// add logic to get collection that has been changed
-//							
-//							MeteorListSendReceive<?> mlsrForCollectionRead = 
-//									new MeteorListSendReceive(mlsrAsExample,clazz);
-//							Map<String, String> selector = new HashMap<String, String>();
-//							selector.put("userId", userId);
-//							List<?> dataFromCollection = 
-//									mlsrForCollectionRead.getList(selector);
-//							for(Object o : dataFromCollection){
-//								Utils.prt(o.toString());
-//							}
-//						}
-//					}
-//		};
-//		
-//		Utils.prtObMess(this.getClass(),"About to subscribe to TableChangedByUser add, updates and removes, which happens after adds and deletes by a Meteor client");
-//		mlsr.subscribeToListDataWithCallback(tableChangedByUserCallback);
-//		Utils.prtObMess(this.getClass(), "kill this process once you are done observing add, update and remove callbacks from Meteor");
 	}
 
 	public void posSubscriptionWithCallback(){
@@ -518,10 +483,70 @@ public class SetupTableModelsAndSendReceiveLists {
 		Utils.prtObMess(this.getClass(), "kill this process once you are done observing add, update and remove callbacks from Meteor");
 	}
 	
+	/**
+	 * test the heartbeat facility, which you might need if you want to restart a program that depends on keeping
+	 *   a meteor ddp connection alive.  Connections at mysite.meteor.com will "silently' die, so you need to keep testing the connection.
+	 */
+	public void heartbeatTest(){
+		if(!doHeartbeatTest)return;
+		MeteorListSendReceive<PosClDetailed> mlsr = null;
+		try {
+			mlsr = example!=null  ? 
+					new MeteorListSendReceive<PosClDetailed>(example,PosClDetailed.class) :
+					new MeteorListSendReceive<PosClDetailed>(100, 
+							PosClDetailed.class, meteorUrl, meteorPort, 
+							adminEmail,adminPass,"", "", "tester");
+		} catch (URISyntaxException e) {
+			throw Utils.IllState(e);
+		}
+		System.out.println("Starting meteor heartbeat connection");
+		final BlockingQueue<String> heartBeatBlockingQueue = new ArrayBlockingQueue<String>(100);
+		final CountDownLatch cdl  = new CountDownLatch(1);
+		final MeteorListCallback<String> callback = 
+				new MeteorListCallback<String>() {
+					@Override
+					public void onMessage(String messageType, String id, String convertedMessage) {
+						int intId = new Integer(id);
+						if(intId==0){
+							System.out.println("Successfully detected lost heartbeat");
+							System.out.println("Message: "+convertedMessage);
+						}else{
+							System.out.println("Problem detecting lost heartbeat");
+							System.out.println("Message: "+convertedMessage);							
+						}
+						cdl.countDown();
+					}
+				};
+		
+		mlsr.heartBeatAlertStart(callback,10);
+//		new Thread(new Runnable() {
+//			
+//			@Override
+//			public void run() {
+//				try {
+//					String fromLostHeartbeat = heartBeatBlockingQueue.take();
+//					System.out.println("lost meteor heartbeat.  Msg from meteor: "+fromLostHeartbeat);
+//					cdl.countDown();
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//					System.exit(-1);
+//				}
+//				
+//			}
+//		}).run();
+		try {
+			cdl.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		System.out.println("Exiting testHeartbeat");
+	}
+	
 	private void readHowToData(){
 		readData(doReadHowToData, HowTos.class);
 	}
 	private void sendHowToData(){
+		if(!doSendHowToData)return;
 		sendData(this.doSendHowToData,HowTos.class,"howTos.csv");
 	}
 	
