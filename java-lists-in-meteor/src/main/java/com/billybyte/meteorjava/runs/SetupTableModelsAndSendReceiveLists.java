@@ -500,7 +500,6 @@ public class SetupTableModelsAndSendReceiveLists {
 			throw Utils.IllState(e);
 		}
 		System.out.println("Starting meteor heartbeat connection");
-		final BlockingQueue<String> heartBeatBlockingQueue = new ArrayBlockingQueue<String>(100);
 		final CountDownLatch cdl  = new CountDownLatch(1);
 		final MeteorListCallback<String> callback = 
 				new MeteorListCallback<String>() {
@@ -519,22 +518,8 @@ public class SetupTableModelsAndSendReceiveLists {
 				};
 		
 		mlsr.heartBeatAlertStart(callback,10);
-//		new Thread(new Runnable() {
-//			
-//			@Override
-//			public void run() {
-//				try {
-//					String fromLostHeartbeat = heartBeatBlockingQueue.take();
-//					System.out.println("lost meteor heartbeat.  Msg from meteor: "+fromLostHeartbeat);
-//					cdl.countDown();
-//				} catch (InterruptedException e) {
-//					e.printStackTrace();
-//					System.exit(-1);
-//				}
-//				
-//			}
-//		}).run();
 		try {
+			System.out.println("Waiting for drop of heartbeat by meteor");
 			cdl.await();
 		} catch (InterruptedException e) {
 			e.printStackTrace();

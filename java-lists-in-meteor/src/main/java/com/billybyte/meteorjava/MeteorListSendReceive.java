@@ -374,41 +374,10 @@ public class MeteorListSendReceive<M> {
 	private Integer getHeartbeat(){
 		ReceiveHeartbeatObserver observer = new  ReceiveHeartbeatObserver();
 		Object[] params = null;
-		return callMeteorSynchronously("heartbeat", params, observer);
+		Integer ret = callMeteorSynchronously("heartbeat", params, observer);
+		return ret;
 	}
 	
-	private class HeartbeatRunnable implements Runnable{
-		private final BlockingQueue<String> lostHeartbeatNotifyBlockingQueue;
-		private final AtomicBoolean keepRunning = new AtomicBoolean(true);
-		private final long waitTimeInSeconds;
-		
-		private HeartbeatRunnable(
-				BlockingQueue<String> lostHeartbeatNotifyBlockingQueue,
-				long waitTimeInSeconds) {
-			super();
-			this.lostHeartbeatNotifyBlockingQueue = lostHeartbeatNotifyBlockingQueue;
-			this.waitTimeInSeconds = waitTimeInSeconds;
-		}
-		
-		
-		@Override
-		public void run() {
-			while(keepRunning.get()){
-				try {
-					Integer zeroIfGood = getHeartbeat();
-					if(zeroIfGood==null){
-						this.lostHeartbeatNotifyBlockingQueue.offer("Lost Heartbeat");
-						break;
-					}
-					Thread.sleep(waitTimeInSeconds*1000);
-				} catch (InterruptedException e) {
-					break;
-				}
-			}
-			
-		}
-		
-	}
 	
 	/**
 	 * start up observation of a heartbeat from meteor and call the callback when
@@ -419,36 +388,28 @@ public class MeteorListSendReceive<M> {
 	 */
 	public void heartBeatAlertStart(
 			final MeteorListCallback<String> lostHeartbeatCallback,final long secondsToWait){
-		
-		final BlockingQueue<String> lostHeartbeatBq = 
-				new ArrayBlockingQueue<String>(100);
+		final AtomicBoolean keepRunning = new AtomicBoolean(true);
+
 		new Thread(new Runnable() {
 			
 			@Override
 			public void run() {
-				heartBeatAlertStart(lostHeartbeatBq, secondsToWait);
-				while(true){
+				while(keepRunning.get()){
 					try {
-						String lostTheHeartBeat = lostHeartbeatBq.take();
-						lostHeartbeatCallback.onMessage("Lost Heartbeat", "0", lostTheHeartBeat);
+						Integer zeroIfGood = getHeartbeat();
+						if(zeroIfGood==null){
+							lostHeartbeatCallback.onMessage("No Heartbeat", "0", "no heartbeat detected from meteor");
+							break;
+						}
+						Thread.sleep(secondsToWait*1000);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
-						lostHeartbeatCallback.onMessage("exception", "-1", e.toString());
-					} 
-					break;
+						break;
+					}
 				}
 			}
-		}).run();
+		}).start();
 	}
 	
-	/**
-	 * start up observation of a heartbeat from meteor and set a blocking queue when
-	 *   you lose the connection to meteor
-	 * @param blockingQueue
-	 */
-	public void heartBeatAlertStart(BlockingQueue<String> blockingQueue,long secondsToWait){
-		new Thread( new HeartbeatRunnable(blockingQueue, secondsToWait)).run();; // one minute wait time
-	}
 	
 	public List<M> getList(
 			Map<String, String> mongoSelectors){
