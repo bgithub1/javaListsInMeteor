@@ -371,7 +371,7 @@ public class MeteorListSendReceive<M> {
 		}
 	}
 
-	private Integer getHeartbeat(){
+	public Integer getHeartbeat(){
 		ReceiveHeartbeatObserver observer = new  ReceiveHeartbeatObserver();
 		Object[] params = null;
 		Integer ret = callMeteorSynchronously("heartbeat", params, observer);
