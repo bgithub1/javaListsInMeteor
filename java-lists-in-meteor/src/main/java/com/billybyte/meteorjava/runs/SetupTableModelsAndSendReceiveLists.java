@@ -16,6 +16,7 @@ import misc.PosClDetailed;
 import misc.PositionClass;
 import misc.Trades;
 
+import com.billybyte.meteorjava.MeteorCsvSendReceive;
 import com.billybyte.meteorjava.MeteorListCallback;
 import com.billybyte.meteorjava.MeteorListSendReceive;
 import com.billybyte.meteorjava.MeteorTableModel;
@@ -51,6 +52,8 @@ public class SetupTableModelsAndSendReceiveLists {
 	boolean doPosSubscriptionWithCallback = false;
 	boolean doTableChangedByUserSubscriptionWithCallback = false;
 	boolean doHeartbeatTest = false;
+	boolean doSimpleCsvTest = false;
+	
 	MeteorListSendReceive<?> example;
 
 	public static void main(String[] args) {
@@ -127,6 +130,9 @@ public class SetupTableModelsAndSendReceiveLists {
 		if(argPairs.containsKey("doHeartbeatTest")){
 			btms.doHeartbeatTest = new Boolean(argPairs.get("doHeartbeatTest"));
 		}
+		if(argPairs.containsKey("doSimpleCsvTest")){
+			btms.doSimpleCsvTest = new Boolean(argPairs.get("doSimpleCsvTest"));
+		}
 		
 		// create a ddp connection that can be re-used
 		try {
@@ -157,6 +163,7 @@ public class SetupTableModelsAndSendReceiveLists {
 		btms.posSubscriptionWithCallback();
 		btms.tableChangedByUserSubscriptionWithCallback();
 		btms.heartbeatTest();
+		btms.simpleCsvTest();
 		if(!btms.doPosSubscriptionWithCallback && !btms.doTableChangedByUserSubscriptionWithCallback){
 			System.exit(0);
 		}
@@ -525,6 +532,37 @@ public class SetupTableModelsAndSendReceiveLists {
 			e.printStackTrace();
 		}
 		System.out.println("Exiting testHeartbeat");
+	}
+	
+	public void simpleCsvTest(){
+		if(!doSimpleCsvTest)return;
+		
+		String tableName = "CsvRiskData";
+		String[][] data = {
+				{"shortName","qty","price"},
+				{"CLM18","23","53.51"},
+				{"CLN18","23","54.51"},
+				{"CLQ18","23","55.51"},
+				{"CLU18","23","56.51"},
+				
+		};
+		List<String[]> csv = new ArrayList<String[]>();
+		for(String[] item:data){
+			csv.add(item);
+		}
+		String userId = adminEmail;
+		MeteorCsvSendReceive mcsvsr = null;
+		try {
+			mcsvsr = 
+					example!=null ? new MeteorCsvSendReceive(example) :
+						new MeteorCsvSendReceive(meteorUrl, meteorPort, adminEmail, adminPass, null, null, "tester");
+		} catch (URISyntaxException e) {
+			throw Utils.IllState(e);
+		}
+				
+		Utils.prt(Arrays.toString(mcsvsr.sendCsvTableModel(tableName)));
+		Utils.prt(Arrays.toString(mcsvsr.sendCsvData(userId, tableName, csv)));
+		System.out.println("Exiting sending csv data");
 	}
 	
 	private void readHowToData(){

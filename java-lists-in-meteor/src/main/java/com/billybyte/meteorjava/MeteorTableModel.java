@@ -22,21 +22,41 @@ public class MeteorTableModel {
 	private final String displayTableName;
 	private final String collectionName;
 	private final MeteorColumnModel[] tableColumnClassArr;
+	private final Boolean isSimpleCsv;
+
 
 	public MeteorTableModel(Class<?> classOfTable,String displayTableName,
 			String collectionName,MeteorColumnModel[] tableColumnClassArr) {
+		this(classOfTable, displayTableName, collectionName, tableColumnClassArr, null);
+	}
+
+	
+	public MeteorTableModel(Class<?> classOfTable,String displayTableName,
+			String collectionName,MeteorColumnModel[] tableColumnClassArr,Boolean isSimpleCsv) {
 		super();
 		this._id = classOfTable.getName();
 		this.displayTableName = displayTableName;
 		this.collectionName = collectionName;
 		this.tableColumnClassArr = tableColumnClassArr;
+		this.isSimpleCsv = isSimpleCsv;
 	}
 
 	public MeteorTableModel(Class<?> classOfTable,MeteorColumnModel[] tableColumnClassArr){
 		this(classOfTable, classOfTable.getName(), classOfTable.getName(), tableColumnClassArr);
 	}
 
-
+	/**
+	 * Use this constructor for SimpleCsv table models
+	 * @param tableName
+	 */
+	public MeteorTableModel(String tableName){
+		this._id = tableName;
+		this.displayTableName = tableName;
+		this.collectionName = tableName;
+		this.tableColumnClassArr = null;
+		this.isSimpleCsv = true;
+		
+	}
 	public MeteorColumnModel[] getTableColumnClassArr() {
 		return tableColumnClassArr;
 	}

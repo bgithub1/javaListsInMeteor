@@ -136,6 +136,7 @@ public class MeteorListSendReceive<M> {
 			this.classOFM = classOfM;
 			
 	}
+	
 
 	
 	public MeteorListSendReceive(
@@ -333,7 +334,46 @@ public class MeteorListSendReceive<M> {
 	public String[] sendList(List<M> dataList) throws InterruptedException{
 		return sendList("addJavaListData", dataList);
 	}
-
+	
+	/**
+	 * This is a convenience method for sending a Csv MeteorTableModel to meteor
+	 *   so that you can then send csv data (List<String[]>) to meteor easily.
+	 * @param tableName
+	 * @return
+	 */
+	public String[] sendCsvTableModel(String tableName){
+		MeteorTableModel mtm = new MeteorTableModel(tableName);
+		List<MeteorTableModel> mtmList = new ArrayList<MeteorTableModel>();
+		mtmList.add(mtm);
+		checkLogin();
+		Object[] params = new Object[1];
+		SendListClass slc = new SendListClass(tableName, mtmList);
+		params[0] = slc;
+		SendTableModelResponseObserver observer = new SendTableModelResponseObserver();
+		return callMeteorSynchronously("addMasterTablesFromJava", params, observer);
+	}
+	
+	/**
+	 * Convenience method for sending csv data (List<String[]>) to meteor.
+	 *   A MeteorTableModel should have already been sent to meteor using the
+	 *   sendCsvTableModel(tableName) method above.
+	 *   
+	 * @param userId
+	 * @param tableName
+	 * @param csv
+	 * @return
+	 */
+	public String[] sendCsvData(String userId,String tableName,List<String[]> csv){
+		List<MeteorCsvListItem> dataToSend = MeteorCsvListItem.fromCsv(userId, csv);
+		checkLogin();
+		Object[] params = new Object[1];
+		SendListClass slc = new SendListClass(tableName, dataToSend);
+		params[0] = slc;
+		SendTableModelResponseObserver observer = new SendTableModelResponseObserver();
+		return callMeteorSynchronously("addJavaListData", params, observer);
+		
+	}
+	
 	public String[] sendTableModelList(List<M> tableModelList) throws InterruptedException{
 		return sendList("addMasterTablesFromJava", tableModelList);
 		
