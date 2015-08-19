@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-
 import com.billybyte.meteorjava.staticmethods.Utils;
 
 public class MeteorValidator extends MeteorBaseListItem{
@@ -15,6 +14,9 @@ public class MeteorValidator extends MeteorBaseListItem{
 	private static final MeteorColumnModel[] DUMMY_TABLECOLUMN_ARRAY = 
 		{};
 	 
+	private static final String FREEFIELD_SEPARATOR = "::";
+	public final static String REGEX_DECIMAL_MASK = "^[+-]{0,1}[0-9]{0,}\\.{0,1}[0-9]{0,}$";
+	public final static String REGEX_INTEGER_MASK = "^[+-]{0,1}[0-9]{0,}$";
 
 	
 	// this field is really of duplicate of the _id (for later delvelopment)	
@@ -27,6 +29,7 @@ public class MeteorValidator extends MeteorBaseListItem{
 	@SuppressWarnings("rawtypes")
 	private final Map independPossChoicesMap ;
 	private final List<String> freeFieldList;
+	private final Map<String,String> regexFieldList;
 	
 	/**
 	 * Constructor for MeteorValidator
@@ -42,15 +45,35 @@ public class MeteorValidator extends MeteorBaseListItem{
 			Map jnestMap,
 			List<String> dependentFieldOrderList,
 			Map<String,List<String>> independentFields,
-			List<String> freeFields) {
+			List<String> freeFields,
+			Map<String,String> regexFieldList) {
 		super(classOfDataToBeValidated.getCanonicalName(),null);
 		this.jnestMap = jnestMap;
 		this.tableName = this.get_id();
 		this.depOrderList = dependentFieldOrderList;
 		this.independPossChoicesMap = independentFields;
 		this.freeFieldList = freeFields;
+		this.regexFieldList = regexFieldList;
 	}
 
+	/**
+	 * Constructor for MeteorValidator
+	 * @param classOfDataToBeValidated
+	 * @param jnestMap
+	 * @param dependentFieldOrderList
+	 * @param independentFields
+	 * @param freeFields
+	 */
+	@SuppressWarnings("rawtypes")
+	public MeteorValidator(
+			Class<?> classOfDataToBeValidated,
+			Map jnestMap,
+			List<String> dependentFieldOrderList,
+			Map<String,List<String>> independentFields,
+			List<String> freeFields) {
+		this(classOfDataToBeValidated, jnestMap, dependentFieldOrderList, 
+				independentFields, freeFields,null);
+	}
 
 
 	/**
@@ -144,6 +167,10 @@ public class MeteorValidator extends MeteorBaseListItem{
 
 	public List<String> getFreeFieldList() {
 		return freeFieldList;
+	}
+
+	public Map<String, String> getRegexFieldList() {
+		return regexFieldList;
 	}
 
 	

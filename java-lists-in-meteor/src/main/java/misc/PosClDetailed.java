@@ -99,9 +99,14 @@ public class PosClDetailed extends PositionClass {
 				"price","qty","prod","type","exch","curr","year",
 				"month"
 		});
+		Map<String, String> regexValidationMap = new HashMap<String, String>();
+		String priceRegex = MeteorValidator.REGEX_DECIMAL_MASK;
+		String qtyRegex = MeteorValidator.REGEX_INTEGER_MASK;
+		regexValidationMap.put("price",priceRegex);
+		regexValidationMap.put("qty",qtyRegex);
 		
 		MeteorValidator ret = 
-				new MeteorValidator(PosClDetailed.class, jnestMap, dependentFieldOrderList, independentFields, freeFields);
+				new MeteorValidator(PosClDetailed.class, jnestMap, dependentFieldOrderList, independentFields, freeFields,regexValidationMap);
 		
 		return ret;
 	}
