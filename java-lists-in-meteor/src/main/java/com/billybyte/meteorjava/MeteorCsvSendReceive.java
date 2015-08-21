@@ -3,6 +3,7 @@ package com.billybyte.meteorjava;
 import java.net.URISyntaxException;
 import java.util.List;
 
+
 /**
  * This class makes it easy to send csv data to meteor.
  * @author sarahhartman
@@ -63,8 +64,8 @@ public class MeteorCsvSendReceive {
 	 * @param csv
 	 * @return
 	 */
-	public String[] sendCsvData(String userId,String tableName,List<String[]> csv){
-		return this.meteorListSendReceive.sendCsvData(userId, tableName, csv);
+	public String[] sendCsvData(String userId,String tableName,List<String[]> csv, boolean deleteOldCsvData){
+		return this.meteorListSendReceive.sendCsvData(userId, tableName, csv,deleteOldCsvData);
 	}
 	
 

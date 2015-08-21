@@ -540,6 +540,7 @@ public class SetupTableModelsAndSendReceiveLists {
 		String tableName = "CsvRiskData";
 		String[][] data = {
 				{"shortName","qty","price"},
+				//{"NGM18","23","53.51"},
 				{"CLM18","23","53.51"},
 				{"CLN18","23","54.51"},
 				{"CLQ18","23","55.51"},
@@ -561,7 +562,7 @@ public class SetupTableModelsAndSendReceiveLists {
 		}
 				
 		Utils.prt(Arrays.toString(mcsvsr.sendCsvTableModel(tableName)));
-		Utils.prt(Arrays.toString(mcsvsr.sendCsvData(userId, tableName, csv)));
+		Utils.prt(Arrays.toString(mcsvsr.sendCsvData(userId, tableName, csv,true)));
 		System.out.println("Exiting sending csv data");
 	}
 	

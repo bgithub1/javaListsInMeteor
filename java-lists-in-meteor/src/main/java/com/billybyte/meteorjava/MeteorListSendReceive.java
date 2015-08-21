@@ -39,6 +39,7 @@ import org.json.JSONObject;
 
 
 
+
 import com.billybyte.meteorjava.staticmethods.MeteorCollectionStaticMethods;
 import com.billybyte.meteorjava.staticmethods.Utils;
 import com.google.gson.Gson;
@@ -363,7 +364,23 @@ public class MeteorListSendReceive<M> {
 	 * @param csv
 	 * @return
 	 */
-	public String[] sendCsvData(String userId,String tableName,List<String[]> csv){
+	public String[] sendCsvData(String userId,String tableName,List<String[]> csv, boolean deleteOldData){
+		if(deleteOldData){
+			// first delete old data
+			// get the old data to delete for this userId
+			Map<String, String> mongoSelectors = new HashMap<String, String>();
+			mongoSelectors.put("userId",userId);
+			List<MeteorCsvListItem> oldListPerForThisUserId = 
+					getCsvList(tableName, mongoSelectors);
+			// extract the _id fields
+			List<String> listOfIdsToRemove = new ArrayList<String>();
+			for(MeteorCsvListItem mcl : oldListPerForThisUserId){
+				listOfIdsToRemove.add(mcl.get_id());
+			}
+			// use the _id fields to do remove
+			removeCsvListItems(tableName,listOfIdsToRemove);
+		}
+		
 		List<MeteorCsvListItem> dataToSend = MeteorCsvListItem.fromCsv(userId, csv);
 		checkLogin();
 		Object[] params = new Object[1];
@@ -373,6 +390,8 @@ public class MeteorListSendReceive<M> {
 		return callMeteorSynchronously("addJavaListData", params, observer);
 		
 	}
+	
+	
 	
 	public String[] sendTableModelList(List<M> tableModelList) throws InterruptedException{
 		return sendList("addMasterTablesFromJava", tableModelList);
@@ -416,6 +435,48 @@ public class MeteorListSendReceive<M> {
 		Object[] params = null;
 		Integer ret = callMeteorSynchronously("heartbeat", params, observer);
 		return ret;
+	}
+	
+	
+	
+	private class ReceivedCsvDataObserver extends MeteorObserver<List<MeteorCsvListItem>>{
+		private final String tableName;
+		
+		ReceivedCsvDataObserver(String tableName){
+			this.tableName = tableName;
+		}
+		
+		@Override
+		List<MeteorCsvListItem> convert(Observable client, JSONObject result) {
+			if(result.has("error")){
+				// throw error
+				String error = result.getString("error");
+				throw Utils.IllState(this.getClass(),error);
+			}
+			String className = result.getString("className");
+			String classNameOfListObjects = tableName;
+			List<MeteorCsvListItem> ret=null;
+			if(className.compareTo(classNameOfListObjects)!=0){
+				Utils.prtObErrMess(this.getClass(),"className returned not equal to class of generic objects");
+				
+			}else{
+				String listString = result.get("list").toString();
+				if(listString==null)return null;
+				@SuppressWarnings("unchecked")
+				List<StringMap<M>> stringMapList = (List<StringMap<M>>)gson.fromJson(listString, List.class);
+				ret = new ArrayList<MeteorCsvListItem>();
+				for(StringMap<M> sm : stringMapList){
+					MeteorCsvListItem m=null;
+					m = getMeteorObject(gson,MeteorCsvListItem.class,sm.toString());
+					if(m!=null){
+						ret.add(m);
+					}
+				}
+			}
+			return ret;
+		}
+		
+		
 	}
 	
 	
@@ -469,6 +530,24 @@ public class MeteorListSendReceive<M> {
 		return callMeteorSynchronously("getJavaListData", params, observer);
 	}
 	
+	public List<MeteorCsvListItem> getCsvList(
+			String tableName,
+			Map<String, String> mongoSelectors){
+		checkLogin();
+		JSONObject selector = new JSONObject();
+		if(mongoSelectors==null){
+			selector = null;
+		}else{
+			for(Entry<String, String> entry : mongoSelectors.entrySet()){
+				selector.put(entry.getKey(), entry.getValue());
+			}
+		}
+		Object[] params = new Object[2];
+		params[0] = tableName;
+		params[1] = selector;
+		ReceivedCsvDataObserver observer = new ReceivedCsvDataObserver(tableName);
+		return callMeteorSynchronously("getJavaListData", params, observer);
+	}
 	
 	private List<M> getListFromDdpMsg(JSONObject result) {
 		// check to see if there is an error field
@@ -502,6 +581,65 @@ public class MeteorListSendReceive<M> {
 	}
 	
 	private M getObject(String objectToString){
+		return getMeteorObject(gson, classOFM, objectToString);
+		
+//		M m=null;
+//		try {
+//			m = gson.fromJson(objectToString,classOFM);
+//		} catch (JsonSyntaxException e) {
+//			// try getting rid of some common issues
+//			// first get rid of { and }
+//			String smReplace = objectToString.replace("{","");
+//			smReplace = smReplace.replace("}","");
+//			// next, break up att=value fields
+//			String[] partsSepByEqual = smReplace.split(",");
+//			smReplace = ""; // create a new gson string in smReplace
+//			// next, make sure that null values (att=, or att=) are replace by ""
+//			for(String pairSepByEqual:partsSepByEqual){
+//				String[] tokens = pairSepByEqual.split("=");
+//				String newTokensSepByEqual = pairSepByEqual;
+//				if(tokens.length==1){
+//					newTokensSepByEqual = tokens[0]+"="+"\"\"";
+//				}
+//				if(tokens.length==2){
+//					// check to see that a string with spaces in the
+//					//   value gets surrounded by quotes
+//					String[] spaceParts=tokens[1].split(" ");
+//					if(spaceParts.length>1){
+//						// replace att=this has spaces
+//						// with att="this has spaces"
+//						newTokensSepByEqual = tokens[0]+"="+"\""+tokens[1]+"\"";
+//					}
+//				}
+//				if(newTokensSepByEqual!=null){
+//					smReplace = smReplace+newTokensSepByEqual+",";
+//				}
+//			}
+//			// get rid of last comma
+//			smReplace = smReplace.substring(0,smReplace.length()-1);
+//			// add back in braces {}
+//			smReplace = "{"+smReplace+"}";
+//			// try parsing gson again
+//			// fix to get rid of leading zeros in numbers
+//			List<String> occurrences = Utils.getRegexMatches(regexExpressionToEliminateLeadingZeros, smReplace);
+//			for(int i = 0;i<occurrences.size();i++){
+//				String occurrence = occurrences.get(i);
+//				List<String> l = Utils.getRegexMatches(regexExpressionWithoutLeadingZeros, occurrence);
+//				String numWithoutLeadingZeros = "=" + l.get(0) ;
+//				smReplace = smReplace.replace(occurrence, numWithoutLeadingZeros);
+//			}
+//			m = gson.fromJson(smReplace,classOFM);
+//		} 
+//		return m;
+	
+	}
+	
+	
+	public static <M> M getMeteorObject(
+			Gson gsonConverter,
+			Class<M> classOFM,
+			String objectToString){
+		Gson gson = gsonConverter==null ? new Gson() :  gsonConverter;
 		M m=null;
 		try {
 			m = gson.fromJson(objectToString,classOFM);
@@ -551,6 +689,8 @@ public class MeteorListSendReceive<M> {
 		} 
 		return m;
 	}
+	
+	
 	
 	private class MeteorEmailObject{
 		@SuppressWarnings("unused")
@@ -934,6 +1074,17 @@ public class MeteorListSendReceive<M> {
 		String[] ret = observer.getReceivedResult();
 		return ret;
 	}
+	
+	public String[] removeCsvListItems(String tableName,List<String> listOfIdsToRemove){
+		checkLogin();
+		String[] arr = listOfIdsToRemove.toArray(new String[]{});
+		Object[] params = {tableName,arr};
+		RemoveListItemsObserver observer = new RemoveListItemsObserver();
+		callMeteorSynchronously("removeJavaListItems", params, observer);
+		String[] ret = observer.getReceivedResult();
+		return ret;
+	}
+
 	
 	private void checkLogin(){
 		if(!isLoggedIn()){
