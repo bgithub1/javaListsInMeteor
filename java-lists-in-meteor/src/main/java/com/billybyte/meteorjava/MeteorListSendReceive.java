@@ -372,13 +372,15 @@ public class MeteorListSendReceive<M> {
 			mongoSelectors.put("userId",userId);
 			List<MeteorCsvListItem> oldListPerForThisUserId = 
 					getCsvList(tableName, mongoSelectors);
-			// extract the _id fields
-			List<String> listOfIdsToRemove = new ArrayList<String>();
-			for(MeteorCsvListItem mcl : oldListPerForThisUserId){
-				listOfIdsToRemove.add(mcl.get_id());
+			if(oldListPerForThisUserId!=null && oldListPerForThisUserId.size()>0){
+				// extract the _id fields
+				List<String> listOfIdsToRemove = new ArrayList<String>();
+				for(MeteorCsvListItem mcl : oldListPerForThisUserId){
+					listOfIdsToRemove.add(mcl.get_id());
+				}
+				// use the _id fields to do remove
+				removeCsvListItems(tableName,listOfIdsToRemove);
 			}
-			// use the _id fields to do remove
-			removeCsvListItems(tableName,listOfIdsToRemove);
 		}
 		
 		List<MeteorCsvListItem> dataToSend = MeteorCsvListItem.fromCsv(userId, csv);
